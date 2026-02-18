@@ -1,0 +1,52 @@
+{
+  "guests": {
+    "salaryman": {
+      "name": "サラリーマン",
+      "maxHp": 55,
+      "atk": 12,
+      "def": 5,
+      "spd": 7,
+      "sprite": "salaryman.png"
+    },
+    "tourist": {
+      "name": "一般観光客",
+      "maxHp": 50,
+      "atk": 11,
+      "def": 5,
+      "spd": 7,
+      "sprite": "tourist.png"
+    },
+    "regular": {
+      "name": "常連客",
+      "maxHp": 60,
+      "atk": 13,
+      "def": 6,
+      "spd": 7,
+      "sprite": "regular.png"
+    },
+    "elite": {
+      "name": "上級サラリーマン",
+      "maxHp": 70,
+      "atk": 15,
+      "def": 7,
+      "spd": 8,
+      "sprite": "elite.png"
+    },
+    "foreign": {
+      "name": "外国人観光客",
+      "maxHp": 75,
+      "atk": 16,
+      "def": 7,
+      "spd": 8,
+      "sprite": "foreign.png"
+    },
+    "ceo": {
+      "name": "社長",
+      "maxHp": 90,
+      "atk": 18,
+      "def": 9,
+      "spd": 9,
+      "sprite": "ceo.png"
+    }
+  }
+}

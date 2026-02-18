@@ -1,0 +1,156 @@
+{
+    "bgKey": "bg_shop_inside",
+    "lines": [
+      {
+        "name": "レイ",
+        "text": "……グロリアス",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "ここでナンバーワンになる",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "おつ。初出勤だっけ",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "……外、カレンと会った？",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "会った",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "だろうな。顔がもう戦闘態勢",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "悪い？",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "悪くない。けど、やり方だけは覚えとけ",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "移動は画面タップ。行きたい場所タップしたら、そこまで歩く",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "人に話したい時は、その人をタップ。近くじゃないと近づくだけ",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "頭の上にアイコンが出たら会話できる距離。PCならFでも同じ",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "出入りはドアをタップ。近くまで寄ってからじゃないと反応しない",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "外を歩いてると、たまに客に絡まれる。そん時は接客バトルな",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "客でも姉でも、絡んできた方が悪い",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "店の中はキャバ嬢をタップで勝負。勝てば次に進む。負けたら立て直せ",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "で、上行きたいなら、勝ち方も積み方も大事",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "積むよ。カレンの上まで",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "オレに話しかけると、回復とセーブが使える。やるなら保存しとけ",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "了解。……礼は言わないけど",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 },
+          { "key": "boy_normal", "x": 920, "scale": 0.5 }
+        ]
+      }
+    ]
+  }
+  

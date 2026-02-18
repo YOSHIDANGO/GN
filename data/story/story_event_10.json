@@ -1,0 +1,118 @@
+{
+    "bgKey": "bg_shop_inside",
+    "lines": [
+      {
+        "name": "ボーイ",
+        "text": "指名が10になった。目立ち始めたな",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "boy_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "数字だけ勝手に前に行く",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "boy_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "あ、レイじゃん。最近楽しくない？",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "別に",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "えー？もったいない",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "せっかく指名増えてきたんだし、もっと楽しも",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "楽しむために来てない",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "そっか。でもさ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "楽しくない顔で上行くの、逆にすごくない？",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "ユナはノリ重視。悪気は一切ない",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "boy_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "悪気ないのが一番めんどい",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "あはは。じゃ、勝負しよ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "勝った方が正しいってことで",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "シンプルで助かる",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      }
+    ]
+  }
+  

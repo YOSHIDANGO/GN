@@ -1,0 +1,125 @@
+{
+    "bgKey": "bg_shop_inside",
+    "lines": [
+      {
+        "name": "ボーイ",
+        "text": "指名が5になった。店内の空気、ちょっと変わってきたな",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "boy_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "数字が動くと、急に話しかけてくるよね",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ミオ",
+        "text": "あ、レイだよね。最近ちょっと噂になってる",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mio_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "新人に噂されるとか、光栄",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mio_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ミオ",
+        "text": "新人だけどさ、ここ来た理由ははっきりしてるんだ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mio_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ミオ",
+        "text": "カレンさんみたいになりたくて入った",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mio_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "……へぇ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mio_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ミオ",
+        "text": "指名って、憧れに近づいた証拠でしょ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mio_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ミオ",
+        "text": "だから、奪われるのは困るんだよね",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mio_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "ミオはカレン直系って自分で言ってるタイプだ。悪く思うな",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "boy_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "直系かどうか、ウチが決めていい？",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "mio_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ミオ",
+        "text": "……本気で言ってる？",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mio_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "本気じゃなきゃ、あの人の上なんて行かない",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "mio_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ボーイ",
+        "text": "やるなら止めない。ここは結果だけ見る場所だ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "boy_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "憧れごと、超える",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "mio_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      }
+    ]
+  }
+  

@@ -1,0 +1,134 @@
+{
+    "bgKey": "bg_shop_inside",
+    "lines": [
+      {
+        "name": "ユナ",
+        "text": "はー……負けたわ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "テンポ崩されると、マジで何もできんね",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "ノリだけじゃ、ここから先はきつい",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "それな",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "でもさ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "あんたとやって、ちょっと楽しかった",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "感想それ？",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "うん",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "負けたけど、あんた強いじゃん",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "カレン行くんでしょ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "行く",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "じゃあさ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "勝ってきてよ。空気変わるの、見たいし",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "観客席から応援？",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "そ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "ユナ",
+        "text": "ウチはウチの場所で見るわ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "yuna_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      }
+    ]
+  }
+  

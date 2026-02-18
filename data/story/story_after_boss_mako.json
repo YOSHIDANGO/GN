@@ -1,0 +1,118 @@
+{
+    "bgKey": "bg_shop_inside",
+    "lines": [
+      {
+        "name": "マコ",
+        "text": "……完敗",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "マコ",
+        "text": "計算、全部外れた",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "読まれる前に変えるから",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "マコ",
+        "text": "……それが一番厄介",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "マコ",
+        "text": "私の役目、ここまでだね",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "止めない？",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "マコ",
+        "text": "もう止められない",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "マコ",
+        "text": "ここを越えた時点で、あんたは挑戦者じゃない",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "マコ",
+        "text": "もう、対等",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "やっと",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "マコ",
+        "text": "……カレン、強いよ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "マコ",
+        "text": "でも",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "マコ",
+        "text": "あんたの方が、崩せる",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "それ聞けたなら十分",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "mako_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      }
+    ]
+  }
+  

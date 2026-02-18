@@ -1,0 +1,126 @@
+{
+    "bgKey": "bg_shop_inside",
+    "lines": [
+      {
+        "name": "ボーイ",
+        "text": "指名が40になった。ここまで来たのは、あんたが初めてだ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "boy_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "数字は裏切らないから",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "boy_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "……ここまで来るとは思わなかった",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "ウチは思ってた",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "昔から、無駄に根性あるよね",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "無駄って言うの、相変わらず",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "あんたはさ",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "いつも、後ろから見てるだけだった",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "見下されてたからね",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "そう思ってた？",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "思ってたじゃなくて、事実",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "……",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "ここまで来たなら、言うことない",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "奪いな",
+        "chars": [
+          { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+          { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "最初から、そのつもり",
+        "chars": [
+            { "key": "rei_normal", "x": 380, "y": 520, "scale": 0.5 },
+            { "key": "karen_normal", "x": 900, "y": 520, "scale": 0.5 }
+        ]
+      }
+    ]
+  }
+  

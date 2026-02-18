@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Glorious Night - Battle</title>
+
+  <!-- ★ここ超重要 -->
+  <link rel="stylesheet" href="./assets/css/battle.css">
+</head>
+<body>
+
+<div id="battle">
+
+  <!-- 背景 -->
+  <div class="battle-bg"
+       style="background-image:url('./assets/bg/store_inside.jpg');">
+  </div>
+
+  <!-- ステータス -->
+  <div class="status-bar">
+    <div class="status">
+      <div class="name">レイ</div>
+      <div class="hp-bar">
+        <div class="hp-fill" style="width:86%;"></div>
+      </div>
+    </div>
+
+    <div class="status">
+      <div class="name">上級サラリーマン</div>
+      <div class="hp-bar">
+        <div class="hp-fill" style="width:100%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- キャラ表示 -->
+  <div class="character-area">
+    <img class="character player"
+         src="./assets/characters/rei_battle.png">
+
+    <img class="character enemy"
+         src="./assets/enemies/salaryman_battle.png">
+  </div>
+
+  <!-- 下部UI -->
+  <div class="ui-bottom">
+
+    <div class="message-log">
+      レイの様子をうかがっている……
+    </div>
+
+    <div class="command-area">
+      <div class="command-hint">
+        1〜4で口撃。ESCで逃げ（仮）
+      </div>
+
+      <div class="command-list">
+        <div class="command active">1. 口撃</div>
+        <div class="command">2. 煽り</div>
+        <div class="command">3. 誘い殺し</div>
+        <div class="command">4. 切り返し</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+    "commands": [
+      {
+        "id": "attack",
+        "label": "口撃",
+        "power": 1.0,
+        "tag": "push"
+      },
+      {
+        "id": "taunt",
+        "label": "煽り",
+        "power": 1.05,
+        "tag": "break"
+      },
+      {
+        "id": "praise",
+        "label": "誉め殺し",
+        "power": 0.95,
+        "tag": "flow"
+      },
+      {
+        "id": "counter",
+        "label": "切り返し",
+        "power": 1.1,
+        "tag": "flow"
+      }
+    ]
+  }
+  

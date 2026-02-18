@@ -1,0 +1,172 @@
+{
+    "bgKey": "bg_susukino_outside",
+    "lines": [
+      {
+        "name": "レイ",
+        "text": "最悪。寝起きからもうだるい",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "今日から初出勤。行かないと始まんない",
+        "chars": [
+          { "key": "rei_normal", "x": 360, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "……レイ？",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "……は？",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "こんなとこで会うと思わなかった",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "まだ、ここにいるんだ",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "仕事だからね。あんたは？",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "これから働く",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "向いてないと思うけど",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "昔からそればっか",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "ここ、遊びじゃないよ",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "知ってる",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "だから来た",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "……本気？",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "あんたが一番なんでしょ",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "そうだけど",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "じゃあ、その席どかせるわ",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "無理。あんたには",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "決めるの早くない？",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "カレン",
+        "text": "下で会ったら、ちゃんと挨拶しな",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      },
+      {
+        "name": "レイ",
+        "text": "下じゃ会わないから",
+        "chars": [
+          { "key": "rei_normal",    "x": 360, "scale": 0.5 },
+          { "key": "karen_normal",  "x": 920, "scale": 0.5 }
+        ]
+      }
+    ]
+  }
+  

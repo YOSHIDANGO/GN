@@ -1,0 +1,210 @@
+bg_battle_generic/* =========================
+Reset / Base
+========================= */
+
+* {
+box-sizing: border-box;
+}
+
+html, body {
+margin: 0;
+padding: 0;
+width: 100%;
+height: 100%;
+background: #000;
+color: #fff;
+font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+}
+
+#battle {
+position: relative;
+width: 100vw;
+height: 100vh;
+overflow: hidden;
+background: #000;
+}
+
+/* =========================
+Background
+========================= */
+
+.battle-bg {
+position: absolute;
+inset: 0;
+background-size: cover;
+background-position: center;
+filter: brightness(0.6);
+z-index: 0;
+}
+
+/* =========================
+Status Bar (Top)
+========================= */
+
+.status-bar {
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+height: 72px;
+padding: 12px 24px;
+display: flex;
+justify-content: space-between;
+background: linear-gradient(
+ to bottom,
+ rgba(0,0,0,0.85),
+ rgba(0,0,0,0)
+);
+z-index: 5;
+}
+
+.status {
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+
+.status .name {
+font-size: 14px;
+opacity: 0.9;
+}
+
+.hp-bar {
+width: 200px;
+height: 10px;
+background: #222;
+border: 1px solid #555;
+}
+
+.hp-fill {
+height: 100%;
+background: linear-gradient(to right, #ff6a6a, #b00000);
+transition: width 0.25s ease;
+}
+
+/* =========================
+Character Area (Middle)
+========================= */
+
+.character-area {
+position: absolute;
+top: 72px;
+bottom: 220px;
+left: 0;
+right: 0;
+padding: 0 80px;
+display: flex;
+justify-content: space-between;
+align-items: flex-end;
+z-index: 3;
+}
+
+.character {
+max-height: 100%;
+max-width: 40%;
+filter: drop-shadow(0 10px 25px rgba(0,0,0,0.9));
+}
+
+.character.player {
+align-self: flex-end;
+}
+
+.character.enemy {
+align-self: flex-end;
+}
+
+/* 被弾演出用 */
+.character.hit {
+animation: hitFlash 0.2s ease;
+}
+
+@keyframes hitFlash {
+0% { filter: brightness(1); }
+50% { filter: brightness(2); }
+100% { filter: brightness(1); }
+}
+
+/* =========================
+Bottom UI
+========================= */
+
+.ui-bottom {
+position: absolute;
+bottom: 0;
+left: 0;
+right: 0;
+height: 220px;
+display: flex;
+flex-direction: column;
+background: rgba(0,0,0,0.9);
+z-index: 5;
+}
+
+/* -------------------------
+Message Log
+------------------------- */
+
+.message-log {
+flex: 1;
+padding: 16px 24px;
+font-size: 15px;
+line-height: 1.6;
+background: rgba(0,0,0,0.6);
+border-bottom: 1px solid #333;
+overflow: hidden;
+}
+
+/* -------------------------
+Command Area
+------------------------- */
+
+.command-area {
+padding: 12px 24px;
+}
+
+.command-hint {
+font-size: 12px;
+opacity: 0.7;
+margin-bottom: 6px;
+}
+
+.command-list {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 8px;
+}
+
+.command {
+padding: 10px 14px;
+border: 1px solid #666;
+background: linear-gradient(#222, #111);
+cursor: pointer;
+font-size: 14px;
+}
+
+.command:hover {
+background: linear-gradient(#333, #111);
+}
+
+.command.active {
+border-color: #ffcc66;
+box-shadow: 0 0 6px rgba(255,204,102,0.8);
+}
+
+/* =========================
+Screen Effects
+========================= */
+
+.flash-red {
+position: absolute;
+inset: 0;
+background: rgba(255,0,0,0.35);
+z-index: 10;
+animation: flashRed 0.2s ease;
+}
+
+@keyframes flashRed {
+0% { opacity: 0; }
+50% { opacity: 1; }
+100% { opacity: 0; }
+}

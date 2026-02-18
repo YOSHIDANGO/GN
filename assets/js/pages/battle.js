@@ -1,0 +1,1 @@
+window.__GN_PAGE__='battle'; import '../main.js';
