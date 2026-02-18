@@ -484,73 +484,98 @@ export class ClubScene extends Phaser.Scene {
   // =========================
   _finishNight({ forced }){
     this.ended = true;
-    this._setFixedBarEnabled(false);
-
-    // ここで一旦会話UIを消して「被り」を避ける
-    // DialogueUIに setVisible が無い場合でも、主に backdrop/text が画面下なので
-    // 目立つのを抑えるためにカメラで少し暗転＋オーバーレイで上書きする
-    const w = this.scale.width;
-    const h = this.scale.height;
-
-    this.endOverlay = this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.45)
-      .setDepth(4000)
-      .setScrollFactor(0)
-      .setInteractive();
-
-    // 少し間を作ってからボーイを出す（唐突感減）
+  
+    // 入力中なら先にキーボード閉じる
+    if (this.domInputEl){
+      this.domInputEl.blur();
+    }
+  
+    // 送信ボタンも無効化
+    if (this.sendBtnBg){
+      this.sendBtnBg.disableInteractive();
+      this.sendBtnBg.setAlpha(0.35);
+    }
+  
+    // 会話UIを薄くして「被り」を防ぐ（DialogueUIの実装に合わせて必要なら調整）
+    // backdrop/name/text がある想定
+    if (this.ui?.backdrop) this.ui.backdrop.setAlpha(0.35);
+    if (this.ui?.nameText) this.ui.nameText.setAlpha(0.55);
+    if (this.ui?.bodyText) this.ui.bodyText.setAlpha(0.55);
+  
+    // キーボードが閉じるのを待ってから演出を出す
     this.time.delayedCall(220, () => {
-      const hasBoy = this.textures.exists(this.boyKey);
-
-      if (hasBoy){
-        this.endBoy = this.add.image(
-          w - Math.floor(w*0.14),
-          h - Math.floor(h*0.02),
-          this.boyKey
-        )
-          .setOrigin(0.5, 1)
-          .setScale(0.62)
-          .setDepth(4100)
-          .setScrollFactor(0);
-      } else {
-        this.endBoy = null;
-      }
-
-      const boxW = Math.min(720, Math.floor(w*0.84));
-      const boxH = 86;
-      const boxY = h - Math.floor(h*0.18);
-
+      const w = this.scale.width;
+      const h = this.scale.height;
+  
+      this.endOverlay = this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.25)
+        .setDepth(4000)
+        .setScrollFactor(0)
+        .setInteractive();
+  
+      // 「お時間です」ボックスは会話欄より上に置く
+      const boxW = Math.min(760, Math.floor(w*0.88));
+      const boxH = 88;
+  
+      // DialogueUIの上に出す（無ければ下から少し上）
+      const baseY = (this.ui?.backdrop)
+        ? (this.ui.backdrop.y - this.ui.backdrop.height * 0.55)
+        : (h - Math.floor(h*0.22));
+  
+      const boxY = Math.max(Math.floor(h*0.20), baseY);
+  
       this.endBox = this.add.rectangle(w/2, boxY, boxW, boxH, 0x000000, 0.70)
-        .setStrokeStyle(2, 0xffffff, 0.25)
-        .setOrigin(0.5, 1)
+        .setStrokeStyle(2, 0xffffff, 0.22)
+        .setOrigin(0.5, 0.5)
         .setDepth(4100)
         .setScrollFactor(0);
-
-      this.endText = this.add.text(
-        w/2,
-        boxY - Math.floor(boxH*0.52),
-        'お時間です',
-        { fontSize:'22px', color:'#ffffff' }
-      )
+  
+      this.endText = this.add.text(w/2, boxY, 'お時間です', {
+        fontSize:'22px',
+        color:'#ffffff'
+      })
         .setOrigin(0.5, 0.5)
         .setDepth(4101)
         .setScrollFactor(0);
-    });
-
-    this.endOverlay.on('pointerdown', () => {
-      this._cleanup();
-
-      this.scene.stop('Club');
-      this.scene.launch('ClubResult', {
-        returnTo: this.returnTo,
-        characterId: this.characterId,
-        affinity: this.affinity,
-        interest: this.interest,
-        irritation: this.irritation,
-        threshold: this.char.irritation_threshold,
-        forced: !!forced
+  
+      // ボーイは右下から「スライドイン」させて唐突感を消す
+      const hasBoy = this.textures.exists(this.boyKey);
+      if (hasBoy){
+        const targetX = w - Math.floor(w*0.14);
+        const targetY = h - Math.floor(h*0.03);
+  
+        this.endBoy = this.add.image(w + 200, targetY, this.boyKey)
+          .setOrigin(0.5, 1)
+          .setScale(0.55)
+          .setDepth(4090) // endBoxより少し後ろ（文字に被らない）
+          .setScrollFactor(0);
+  
+        this.tweens.add({
+          targets: this.endBoy,
+          x: targetX,
+          duration: 180,
+          ease: 'Sine.out'
+        });
+      } else {
+        this.endBoy = null;
+      }
+  
+      this.endOverlay.on('pointerdown', () => {
+        this._cleanup();
+  
+        this.scene.stop('Club');
+        this.scene.launch('ClubResult', {
+          returnTo: this.returnTo,
+          characterId: this.characterId,
+          affinity: this.affinity,
+          interest: this.interest,
+          irritation: this.irritation,
+          threshold: this.char.irritation_threshold,
+          forced: !!forced
+        });
       });
     });
   }
+  
 
   _endAndReturn(){
     this._cleanup();
