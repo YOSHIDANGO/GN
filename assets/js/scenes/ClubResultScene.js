@@ -41,33 +41,30 @@ export class ClubResultScene extends Phaser.Scene {
     });
 
     // =========================
-    // UI
+    // UI (生成だけして、layoutで配置する)
     // =========================
     const w = this.scale.width;
     const h = this.scale.height;
 
     // 背景暗幕
-    this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.72).setScrollFactor(0);
+    this.overlay = this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.72).setScrollFactor(0);
 
     // パネル
-    const panelW = Math.min(920, w - 60);
-    const panelH = Math.min(560, h - 120);
-
-    this.add.rectangle(w/2, h/2, panelW, panelH, 0x000000, 0.55)
+    this.panelBg = this.add.rectangle(w/2, h/2, 100, 100, 0x000000, 0.55)
       .setStrokeStyle(2, 0xffffff, 0.25)
       .setScrollFactor(0);
 
     // タイトル
-    this.add.text(w/2, h/2 - panelH/2 + 28, 'Result', {
+    this.titleTx = this.add.text(0, 0, 'Result', {
       fontSize: '28px',
       color: '#ffffff'
     }).setOrigin(0.5, 0).setScrollFactor(0);
 
     // ランク
-    this.add.text(w/2, h/2 - 60, `Rank ${rank}`, {
+    this.rankTx = this.add.text(0, 0, `Rank ${rank}`, {
       fontSize: '64px',
       color: '#ffffff'
-    }).setOrigin(0.5).setScrollFactor(0);
+    }).setOrigin(0.5, 0).setScrollFactor(0);
 
     // 詳細
     const lines = [
@@ -77,7 +74,7 @@ export class ClubResultScene extends Phaser.Scene {
       `score: ${score}`
     ];
 
-    this.add.text(w/2, h/2 + 10, lines.join('\n'), {
+    this.detailTx = this.add.text(0, 0, lines.join('\n'), {
       fontSize: '18px',
       color: '#ffffff',
       lineSpacing: 10
@@ -94,20 +91,20 @@ export class ClubResultScene extends Phaser.Scene {
       ? `Unlocked:\n${unlockLines.join('\n')}`
       : 'Unlocked:\nなし';
 
-    this.add.text(w/2, h/2 + 170, unlockText, {
+    this.unlockTx = this.add.text(0, 0, unlockText, {
       fontSize: '16px',
       color: '#ffffff',
       lineSpacing: 8
     }).setOrigin(0.5, 0).setAlpha(0.85).setScrollFactor(0);
 
     // ボタン
-    const mkBtn = (label, x, y, onClick) => {
-      const bg = this.add.rectangle(x, y, 240, 56, 0x000000, 0.65)
+    const mkBtn = (label, onClick) => {
+      const bg = this.add.rectangle(0, 0, 240, 56, 0x000000, 0.65)
         .setStrokeStyle(2, 0xffffff, 0.25)
         .setScrollFactor(0)
         .setInteractive({ useHandCursor: true });
 
-      const tx = this.add.text(x, y, label, {
+      const tx = this.add.text(0, 0, label, {
         fontSize: '18px',
         color: '#ffffff'
       }).setOrigin(0.5).setScrollFactor(0);
@@ -116,10 +113,92 @@ export class ClubResultScene extends Phaser.Scene {
       return { bg, tx };
     };
 
-    const btnY = h/2 + panelH/2 - 62;
+    this.btnBack = mkBtn('戻る', () => this._goBack());
+    this.btnRetry = mkBtn('もう一回', () => this._retry());
 
-    mkBtn('戻る', w/2 - 140, btnY, () => this._goBack());
-    mkBtn('もう一回', w/2 + 140, btnY, () => this._retry());
+    // =========================
+    // layout（ここが被り対策の本体）
+    // =========================
+    const layout = () => {
+      const w = this.scale.width;
+      const h = this.scale.height;
+
+      this.overlay.setPosition(w/2, h/2);
+      this.overlay.setSize(w, h);
+
+      // パネルサイズ（小画面対策で上限下限つける）
+      const panelW = Math.min(920, w - 40);
+      const panelH = Math.min(560, h - 90);
+
+      this.panelBg.setPosition(w/2, h/2);
+      this.panelBg.setSize(panelW, panelH);
+
+      const padX = Math.max(18, Math.floor(panelW * 0.06));
+      const padY = Math.max(16, Math.floor(panelH * 0.08));
+
+      const top = h/2 - panelH/2 + padY;
+      const left = w/2 - panelW/2 + padX;
+      const right = w/2 + panelW/2 - padX;
+
+      // フォント可変（被り防止）
+      const titleFs  = Math.max(16, Math.min(28, Math.floor(h * 0.03)));
+      const rankFs   = Math.max(34, Math.min(64, Math.floor(h * 0.075)));
+      const detailFs = Math.max(13, Math.min(18, Math.floor(h * 0.022)));
+      const unlockFs = Math.max(12, Math.min(16, Math.floor(h * 0.02)));
+
+      this.titleTx.setFontSize(titleFs);
+      this.rankTx.setFontSize(rankFs);
+      this.detailTx.setFontSize(detailFs);
+      this.unlockTx.setFontSize(unlockFs);
+
+      // 折り返し（超重要）
+      const wrapW = Math.floor(panelW - padX*2);
+      this.detailTx.setWordWrapWidth(wrapW, true);
+      this.unlockTx.setWordWrapWidth(wrapW, true);
+
+      // 縦積み配置
+      let y = top;
+
+      this.titleTx.setPosition(w/2, y).setOrigin(0.5, 0);
+      y += this.titleTx.height + Math.floor(padY * 0.35);
+
+      this.rankTx.setPosition(w/2, y).setOrigin(0.5, 0);
+      y += this.rankTx.height + Math.floor(padY * 0.30);
+
+      this.detailTx.setPosition(w/2, y).setOrigin(0.5, 0);
+      y += this.detailTx.height + Math.floor(padY * 0.25);
+
+      this.unlockTx.setPosition(w/2, y).setOrigin(0.5, 0);
+      y += this.unlockTx.height + Math.floor(padY * 0.45);
+
+      // ボタン領域（残り高さと相談して横→縦）
+      const btnH = Math.max(48, Math.floor(h * 0.07));
+      const gap = Math.max(12, Math.floor(panelW * 0.03));
+
+      const panelBottom = h/2 + panelH/2 - padY;
+      const remain = panelBottom - y;
+
+      const canTwoCols = (panelW >= 520) && (remain >= btnH + 4);
+
+      if (canTwoCols){
+        const btnW = Math.floor((panelW - padX*2 - gap) / 2);
+        const by = panelBottom;
+
+        this._placeBtn(this.btnBack, left + btnW/2, by, btnW, btnH);
+        this._placeBtn(this.btnRetry, right - btnW/2, by, btnW, btnH);
+      } else {
+        const btnW = Math.floor(panelW - padX*2);
+        const by2 = panelBottom;
+        const by1 = by2 - btnH - 10;
+
+        this._placeBtn(this.btnBack, w/2, by1, btnW, btnH);
+        this._placeBtn(this.btnRetry, w/2, by2, btnW, btnH);
+      }
+    };
+
+    layout();
+    this._onResize = () => this.time.delayedCall(0, layout);
+    this.scale.on('resize', this._onResize);
 
     // ESCでも戻る
     this.keyEsc = this.input.keyboard.addKey('ESC');
@@ -129,6 +208,12 @@ export class ClubResultScene extends Phaser.Scene {
     if (this.keyEsc && Phaser.Input.Keyboard.JustDown(this.keyEsc)){
       this._goBack();
     }
+  }
+
+  _placeBtn(btn, x, y, w, h){
+    btn.bg.setPosition(x, y);
+    btn.bg.setSize(w, h);
+    btn.tx.setPosition(x, y);
   }
 
   // =========================
@@ -209,11 +294,13 @@ export class ClubResultScene extends Phaser.Scene {
   // nav
   // =========================
   _goBack(){
+    this._cleanup();
     this.scene.stop('ClubResult');
     this.scene.resume(this.returnTo);
   }
 
   _retry(){
+    this._cleanup();
     this.scene.stop('ClubResult');
 
     // returnTo を pause したまま Club を重ねる想定
@@ -221,5 +308,12 @@ export class ClubResultScene extends Phaser.Scene {
       returnTo: this.returnTo,
       characterId: this.characterId
     });
+  }
+
+  _cleanup(){
+    if (this._onResize){
+      this.scale.off('resize', this._onResize);
+      this._onResize = null;
+    }
   }
 }

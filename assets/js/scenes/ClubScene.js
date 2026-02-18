@@ -131,6 +131,8 @@ export class ClubScene extends Phaser.Scene {
       const wrap = document.createElement('div');
       wrap.style.width = '100%';
       wrap.style.display = 'block';
+      // FIX: DOM幅はみ出し対策（padding込みにする）
+      wrap.style.boxSizing = 'border-box';
 
       const input = document.createElement('input');
       input.type = 'text';
@@ -148,6 +150,8 @@ export class ClubScene extends Phaser.Scene {
       input.style.background = 'rgba(0,0,0,0.55)';
       input.style.color = '#fff';
       input.style.outline = 'none';
+      // FIX: padding込みで収める
+      input.style.boxSizing = 'border-box';
 
       wrap.appendChild(input);
 
@@ -281,15 +285,22 @@ export class ClubScene extends Phaser.Scene {
       const btnH = barH;
       const gap = Math.max(10, Math.floor(w * 0.02));
 
-      const leftPad = Math.max(14, Math.floor(w * 0.03));
+      // FIX: 左右パッド少し増やして端末差吸収
+      const leftPad  = Math.max(16, Math.floor(w * 0.035));
       const rightPad = Math.max(14, Math.floor(w * 0.03));
 
-      const inputW = Math.max(220, w - leftPad - rightPad - btnW - gap);
+      // FIX: inputWを少し控えめに確保
+      const inputWRaw = w - leftPad - rightPad - btnW - gap - 6;
+      const inputW = Math.max(200, Math.floor(inputWRaw));
 
       // DOM input（左）
       if (this.domInput){
         this.domInput.setPosition(leftPad + inputW/2, barY - barH/2);
-        this.domInput.node.style.width = `${inputW}px`;
+
+        // FIX: DOM幅はみ出し対策（端末差分の保険）
+        const safeInputW = Math.max(180, inputW - 12);
+        this.domInput.node.style.width = `${safeInputW}px`;
+        this.domInput.node.style.boxSizing = 'border-box';
       }
 
       // PC用見た目（必要なら後で削る。今はスマホで非表示）
