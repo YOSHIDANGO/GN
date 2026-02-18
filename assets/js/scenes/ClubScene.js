@@ -20,6 +20,9 @@ export class ClubScene extends Phaser.Scene {
     // スマホ判定（ざっくり）
     this.isTouch = !this.sys.game.device.os.desktop;
 
+    // 送信中ガード
+    this.pending = false;
+
     // =========================
     // character def (暫定：cacheに無ければデフォ)
     // =========================
@@ -153,6 +156,8 @@ export class ClubScene extends Phaser.Scene {
 
       const doSend = () => {
         if (this.ended) return;
+        if (this.pending) return;
+
         const v = (input.value || '').trim();
         if (!v) return;
         input.value = '';
@@ -198,6 +203,7 @@ export class ClubScene extends Phaser.Scene {
 
     this.sendBtnBg.on('pointerdown', () => {
       if (this.ended) return;
+      if (this.pending) return;
 
       if (this.isTouch && this.domInputEl){
         const v = (this.domInputEl.value || '').trim();
@@ -220,6 +226,7 @@ export class ClubScene extends Phaser.Scene {
     this._onKeyDown = (ev) => {
       if (this.ended) return;
       if (this.isTouch) return; // スマホはDOM側で入力
+      if (this.pending) return;
 
       const k = ev.key;
 
@@ -379,56 +386,65 @@ export class ClubScene extends Phaser.Scene {
     this._submitText(text);
   }
 
-  _submitText(text){
+  async _submitText(text){
     if (this.ended) return;
+    if (this.pending) return;
 
-    this.lastPlayerText = text;
+    this.pending = true;
+    this.sendBtnBg.disableInteractive();
+    this.sendBtnBg.setAlpha(0.55);
 
-    // 1) irritation 自然減衰
-    this.irritation = Math.max(0, this.irritation - this.irritationDecayPerTurn);
+    try {
+      this.lastPlayerText = text;
 
-    // 2) サーバ呼び出し（いまはダミー）
-    const payload = this._makeTurnPayload(text);
+      // 1) irritation 自然減衰
+      this.irritation = Math.max(0, this.irritation - this.irritationDecayPerTurn);
 
-    // ★ここを後で fetch('/club/turn', ...) に差し替える
-    const out = this._callServerDummy(payload);
+      // 2) サーバ呼び出し
+      const payload = this._makeTurnPayload(text);
+      const out = await this._callServer(payload);
 
-    // 3) サーバ結果を反映（骨組み用）
-    const dh = out?.deltaHint || { affinity:0, interest:0, irritation:0 };
+      // 3) 反映
+      const dh = out?.deltaHint || { affinity:0, interest:0, irritation:0 };
+      const irrDelta = Math.round((Number(dh.irritation)||0) * this.char.irritation_sensitivity);
 
-    // irritation だけ感度倍率
-    const irrDelta = Math.round((Number(dh.irritation)||0) * this.char.irritation_sensitivity);
+      this.affinity += (Number(dh.affinity)||0);
+      this.interest += (Number(dh.interest)||0);
+      this.irritation += irrDelta;
 
-    this.affinity += (Number(dh.affinity)||0);
-    this.interest += (Number(dh.interest)||0);
-    this.irritation += irrDelta;
+      this.affinity = Phaser.Math.Clamp(this.affinity, -50, 999);
+      this.interest = Phaser.Math.Clamp(this.interest, -50, 999);
+      this.irritation = Phaser.Math.Clamp(this.irritation, 0, 999);
 
-    // clamp
-    this.affinity = Phaser.Math.Clamp(this.affinity, -50, 999);
-    this.interest = Phaser.Math.Clamp(this.interest, -50, 999);
-    this.irritation = Phaser.Math.Clamp(this.irritation, 0, 999);
+      // 4) 終了判定
+      const threshold = this.char.irritation_threshold;
+      const forceEnd = !!out?.flags?.forceEnd || (this.irritation >= threshold);
 
-    // 4) 強制終了判定
-    const threshold = this.char.irritation_threshold;
-    const forceEnd = !!out?.flags?.forceEnd || (this.irritation >= threshold);
+      // 5) 表示
+      this._renderTurn();
+      this._showNpc(out?.npcText || '……');
 
-    // 5) 表示
-    this._renderTurn();
-    this._showNpc(out?.npcText || '……');
+      // 6) ターン進行
+      if (forceEnd){
+        this._finishNight({ forced:true });
+        return;
+      }
 
-    // 6) ターン進行
-    if (forceEnd){
-      this._finishNight({ forced:true });
-      return;
+      if (this.turn >= 10){
+        this._finishNight({ forced:false });
+        return;
+      }
+
+      this.turn += 1;
+      this._renderTurn();
+
+    } finally {
+      this.pending = false;
+      if (!this.ended){
+        this.sendBtnBg.setAlpha(1);
+        this.sendBtnBg.setInteractive({ useHandCursor:true });
+      }
     }
-
-    if (this.turn >= 10){
-      this._finishNight({ forced:false });
-      return;
-    }
-
-    this.turn += 1;
-    this._renderTurn();
   }
 
   _makeTurnPayload(playerText){
@@ -449,6 +465,28 @@ export class ClubScene extends Phaser.Scene {
       stateSummary,
       debugFlags: { local:true }
     };
+  }
+
+  async _callServer(payload){
+    try {
+      const res = await fetch('/api/club/turn', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const json = await res.json();
+
+      if (!json.signals) json.signals = { mood:'soft', distance:0 };
+      if (!json.deltaHint) json.deltaHint = { affinity:0, interest:0, irritation:0 };
+      if (!json.flags) json.flags = { forceEnd:false };
+
+      return json;
+    } catch (e){
+      return this._callServerDummy(payload);
+    }
   }
 
   _callServerDummy(payload){
@@ -497,13 +535,11 @@ export class ClubScene extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
 
-    // 半透明レイヤー
     this.endOverlay = this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.35)
       .setDepth(4000)
       .setScrollFactor(0)
       .setInteractive();
 
-    // ボーイ（既存キーが無くても落ちないように）
     const hasBoy = this.textures.exists(this.boyKey);
     if (hasBoy){
       this.endBoy = this.add.image(
@@ -519,7 +555,6 @@ export class ClubScene extends Phaser.Scene {
       this.endBoy = null;
     }
 
-    // セリフ枠
     const boxW = Math.min(720, Math.floor(w*0.84));
     const boxH = 86;
     const boxY = h - Math.floor(h*0.18);
@@ -540,26 +575,24 @@ export class ClubScene extends Phaser.Scene {
       .setDepth(4101)
       .setScrollFactor(0);
 
-    // タップでResultSceneに
     this.endOverlay.on('pointerdown', () => {
-        this._cleanup();
-      
-        this.scene.stop('Club');
-        this.scene.launch('ClubResult', {
-          returnTo: this.returnTo,
-          characterId: this.characterId,
-          affinity: this.affinity,
-          interest: this.interest,
-          irritation: this.irritation,
-          threshold: this.char.irritation_threshold,
-          forced: !!forced
-        });
+      this._cleanup();
+
+      this.scene.stop('Club');
+      this.scene.launch('ClubResult', {
+        returnTo: this.returnTo,
+        characterId: this.characterId,
+        affinity: this.affinity,
+        interest: this.interest,
+        irritation: this.irritation,
+        threshold: this.char.irritation_threshold,
+        forced: !!forced
       });
+    });
   }
 
   _endAndReturn(){
     this._cleanup();
-
     this.scene.stop('Club');
     this.scene.resume(this.returnTo);
   }
@@ -580,7 +613,6 @@ export class ClubScene extends Phaser.Scene {
       this.domInputEl = null;
     }
 
-    // end overlay系
     if (this.endOverlay){ this.endOverlay.destroy(); this.endOverlay = null; }
     if (this.endBoy){ this.endBoy.destroy(); this.endBoy = null; }
     if (this.endBox){ this.endBox.destroy(); this.endBox = null; }
