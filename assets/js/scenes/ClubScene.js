@@ -24,26 +24,22 @@ export class ClubScene extends Phaser.Scene {
     this.pending = false;
 
     // =========================
-    // enter portrait mode (Club only)
-    // =========================
-    this._enterPortraitMode();
-
-    // =========================
     // character def (暫定：cacheに無ければデフォ)
     // =========================
-    const defKey = `club_char_${this.characterId}`;
+    const defKey = `club_char_${this.characterId}`; // BootSceneで load.json('club_char_rei', ...) する想定
     const def = this.cache.json.get(defKey) || {};
 
     this.char = {
       id: this.characterId,
       name: def.name || 'レイ',
-      portraitKey: def.portraitKey || 'rei_normal',
+      portraitKey: def.portraitKey || 'rei_normal', // 立ち絵キー（仮）
       bgKey: def.bgKey || 'bg_shop_inside',
 
       irritation_threshold: Number(def.irritation_threshold ?? 70),
       irritation_sensitivity: Number(def.irritation_sensitivity ?? 1.0),
       forgiveness_rate: Number(def.forgiveness_rate ?? 2.0),
 
+      // 使うのは後でOK（MVPでは保持だけ）
       sexual_tolerance: Number(def.sexual_tolerance ?? 1.0),
       ego_tolerance: Number(def.ego_tolerance ?? 1.0),
       clingy_tolerance: Number(def.clingy_tolerance ?? 1.0)
@@ -61,6 +57,7 @@ export class ClubScene extends Phaser.Scene {
     this.lastPlayerText = '';
     this.lastNpcText = '';
 
+    // irritation 自然減衰（仮）
     this.irritationDecayPerTurn = 2;
 
     // =========================
@@ -77,10 +74,10 @@ export class ClubScene extends Phaser.Scene {
       this.bg.setScale(Math.max(sx, sy));
     };
 
-    // Dialogue UI
+    // Dialogue UI（NPCのセリフ表示に使う）
     this.ui = new DialogueUI(this);
 
-    // 立ち絵
+    // 立ち絵（中央寄せで配置）
     this.portrait = this.add.image(0, 0, this.char.portraitKey)
       .setOrigin(0.5, 1)
       .setDepth(900);
@@ -91,7 +88,7 @@ export class ClubScene extends Phaser.Scene {
       color:'#ffffff'
     }).setShadow(2,2,'#000',2).setDepth(2000).setScrollFactor(0);
 
-    // PC入力（スマホは非表示）
+    // 入力欄（PC用：スマホでは非表示）
     this.inputBox = this.add.rectangle(0, 0, 100, 46, 0x000000, 0.55)
       .setOrigin(0.5, 1)
       .setDepth(2000)
@@ -107,8 +104,11 @@ export class ClubScene extends Phaser.Scene {
       color:'#ffffff'
     }).setAlpha(0.75).setDepth(2001).setScrollFactor(0);
 
-    // debug
-    this.debug = { show: !!data?.debug, text: null };
+    // デバッグ
+    this.debug = {
+      show: !!data?.debug,
+      text: null
+    };
     if (this.debug.show){
       this.debug.text = this.add.text(0, 0, '', {
         fontSize:'14px',
@@ -116,7 +116,7 @@ export class ClubScene extends Phaser.Scene {
       }).setShadow(2,2,'#000',2).setDepth(2001).setScrollFactor(0);
     }
 
-    // PC入力バッファ
+    // 入力バッファ（PC用）
     this.buf = '';
     this.maxChars = 60;
 
@@ -178,6 +178,7 @@ export class ClubScene extends Phaser.Scene {
       input.addEventListener('blur',  () => { this.domFocused = false; });
     }
 
+    // スマホはPC入力UIを消す
     if (this.isTouch){
       this.inputBox.setVisible(false);
       this.inputText.setVisible(false);
@@ -185,7 +186,7 @@ export class ClubScene extends Phaser.Scene {
     }
 
     // =========================
-    // send button
+    // send button (Phaser)
     // =========================
     this.sendBtnBg = this.add.rectangle(0, 0, 160, 54, 0x000000, 0.65)
       .setStrokeStyle(2, 0xffffff, 0.25)
@@ -215,6 +216,7 @@ export class ClubScene extends Phaser.Scene {
         return;
       }
 
+      // PCはbuf送信
       this._submit();
     });
 
@@ -225,7 +227,7 @@ export class ClubScene extends Phaser.Scene {
 
     this._onKeyDown = (ev) => {
       if (this.ended) return;
-      if (this.isTouch) return;
+      if (this.isTouch) return; // スマホはDOM側で入力
       if (this.pending) return;
 
       const k = ev.key;
@@ -264,41 +266,58 @@ export class ClubScene extends Phaser.Scene {
 
       fitBg();
 
+      // turn text
       this.turnText.setPosition(
         Math.max(14, Math.floor(w*0.02)),
         Math.max(10, Math.floor(h*0.02))
       );
 
-      // bottom input bar
-      const bottomMargin = Math.max(14, Math.floor(h * 0.02));
-      const barH = Math.max(56, Math.floor(h * 0.07));
+      // =========================
+      // bottom input bar (DOM + send btn)
+      // =========================
+      const bottomMargin = Math.max(12, Math.floor(h * 0.02));
+      const barH = Math.max(56, Math.floor(h * 0.08));
       const barY = h - bottomMargin;
 
-      const leftPad  = Math.max(16, Math.floor(w * 0.04));
-      const rightPad = Math.max(16, Math.floor(w * 0.04));
+      const btnW = Math.min(210, Math.floor(w * 0.22));
+      const btnH = barH;
       const gap = Math.max(10, Math.floor(w * 0.02));
 
-      // まずボタンを右端固定（ここがはみ出し対策の本体）
-      const btnW = Math.min(220, Math.floor(w * 0.26));
-      const btnH = barH;
-      const btnX = w - rightPad - btnW/2;
+      const leftPad = Math.max(14, Math.floor(w * 0.03));
+      const rightPad = Math.max(14, Math.floor(w * 0.03));
 
-      // 入力は「左Pad〜(ボタン左端-gap)」まで
-      const inputRight = (btnX - btnW/2) - gap;
-      const inputW = Math.max(160, Math.floor(inputRight - leftPad));
-      const inputX = leftPad + inputW/2;
+      // 入力欄に回せる横幅（ゲーム座標）
+      const inputW_game = Math.max(220, w - leftPad - rightPad - btnW - gap);
 
-      // DOM input
+      // 位置（ゲーム座標）
+      const inputX = leftPad + inputW_game / 2;
+      const btnX_raw = leftPad + inputW_game + gap + btnW / 2;
+
+      // ボタンが右にはみ出さないようにクランプ
+      const btnX = Phaser.Math.Clamp(btnX_raw, btnW/2 + 2, w - btnW/2 - 2);
+
+      // =========================
+      // DOM input（左）
+      //   はみ出しの原因: FITのdisplayScaleでDOMが二重に拡大されることがある
+      //   対策: DOMだけ逆スケール + CSS幅はdisplayScaleで割る
+      // =========================
       if (this.domInput){
+        const dsx = (this.scale.displayScale?.x) || 1;
+        const dsy = (this.scale.displayScale?.y) || 1;
+
+        // DOMの座標はゲーム座標で置く
         this.domInput.setPosition(inputX, barY - barH/2);
 
-        // DOMは端末差で数pxズレるから少し縮める
-        const safeW = Math.max(140, inputW - 14);
-        this.domInput.node.style.width = `${safeW}px`;
+        // DOMだけ逆スケールで二重拡大を打ち消す
+        this.domInput.setScale(1/dsx, 1/dsy);
+
+        // CSS幅(px)はdisplayScaleで割った値にする
+        const inputW_css = Math.max(140, Math.floor((inputW_game - 18) / dsx));
+        this.domInput.node.style.width = `${inputW_css}px`;
         this.domInput.node.style.boxSizing = 'border-box';
       }
 
-      // PC入力見た目（スマホでは非表示）
+      // PC用見た目（スマホでは非表示）
       if (!this.isTouch){
         const boxW = Math.min(1180, w - leftPad*2);
         this.inputBox.setPosition(w/2, barY);
@@ -309,55 +328,29 @@ export class ClubScene extends Phaser.Scene {
         this.hintText.setPosition(w/2 - boxW/2 + padX, barY - Math.max(20, Math.floor(barH*0.22)));
       }
 
-      // 送信ボタン
+      // 送信ボタン（右）
       this.sendBtnBg.setPosition(btnX, barY);
       this.sendBtnBg.setSize(btnW, btnH);
       this.sendBtnTx.setPosition(btnX, barY - Math.floor(btnH*0.28));
 
-      // portrait（縦前提で少し上に）
-      const bottomY = this.ui.getPortraitBottomY(Math.max(10, Math.floor(h * 0.02)));
+      // =========================
+      // portrait（中央寄せ）
+      // =========================
+      const bottomY = this.ui.getPortraitBottomY(Math.max(8, Math.floor(h * 0.015)));
       this.portrait.setPosition(Math.floor(w*0.5), bottomY);
 
       const safeTop = Math.max(10, Math.floor(h*0.02));
-      const maxH = Math.max(260, bottomY - safeTop);
-      const maxW = Math.min(Math.floor(w * 0.72), 860);
+      const maxH = Math.max(220, bottomY - safeTop);
+      const maxW = Math.min(Math.floor(w * 0.60), 820);
 
       const texW = this.portrait.width || 1;
       const texH = this.portrait.height || 1;
-      const s = Math.min(0.70, maxH/texH, maxW/texW);
+      const s = Math.min(0.62, maxH/texH, maxW/texW);
       this.portrait.setScale(s);
 
+      // debug
       if (this.debug.text){
         this.debug.text.setPosition(w - 10, 10).setOrigin(1,0);
-      }
-
-      // 終了演出中のUIも追従
-      if (this.endOverlay){
-        this.endOverlay.setPosition(w/2, h/2);
-        this.endOverlay.setSize(w, h);
-      }
-      if (this.endBox){
-        const boxW = Math.min(760, Math.floor(w*0.86));
-        const boxH = Math.max(92, Math.floor(h*0.10));
-        const boxY = h - Math.floor(h*0.24);
-        this.endBox.setPosition(w/2, boxY);
-        this.endBox.setSize(boxW, boxH);
-        if (this.endText){
-          this.endText.setPosition(w/2, boxY - Math.floor(boxH*0.52));
-        }
-      }
-      if (this.endBoy){
-        // ボーイは会話帯に被せない。右下から少し上げる
-        this.endBoy.setPosition(
-          w - Math.floor(w*0.18),
-          h - Math.floor(h*0.10)
-        );
-        const maxBoyW = Math.floor(w * 0.42);
-        const maxBoyH = Math.floor(h * 0.55);
-        const tw = this.endBoy.width || 1;
-        const th = this.endBoy.height || 1;
-        const bs = Math.min(0.62, maxBoyW/tw, maxBoyH/th);
-        this.endBoy.setScale(bs);
       }
     };
 
@@ -365,9 +358,11 @@ export class ClubScene extends Phaser.Scene {
     this._onResize = () => this.time.delayedCall(0, layout);
     this.scale.on('resize', this._onResize);
 
+    // 初回表示
     this._renderTurn();
     this._renderInput();
 
+    // まず1行目（仮）
     this._showNpc('いらっしゃい。今日はどうする');
   }
 
@@ -377,8 +372,13 @@ export class ClubScene extends Phaser.Scene {
     }
   }
 
+  // =========================
+  // render helpers
+  // =========================
   _renderTurn(){
-    this.turnText.setText(`Turn ${this.turn}/10`);
+    const t = `Turn ${this.turn}/10`;
+    this.turnText.setText(t);
+
     if (this.debug.text){
       this.debug.text.setText(
         `aff=${this.affinity}  int=${this.interest}  irr=${this.irritation}/${this.char.irritation_threshold}`
@@ -398,9 +398,13 @@ export class ClubScene extends Phaser.Scene {
     this.ui.setText(this.lastNpcText);
   }
 
+  // =========================
+  // turn flow
+  // =========================
   _submit(){
     const text = (this.buf || '').trim();
     if (!text) return;
+
     this.buf = '';
     this._renderInput();
     this._submitText(text);
@@ -417,11 +421,14 @@ export class ClubScene extends Phaser.Scene {
     try {
       this.lastPlayerText = text;
 
+      // 1) irritation 自然減衰
       this.irritation = Math.max(0, this.irritation - this.irritationDecayPerTurn);
 
+      // 2) サーバ呼び出し
       const payload = this._makeTurnPayload(text);
       const out = await this._callServer(payload);
 
+      // 3) 反映
       const dh = out?.deltaHint || { affinity:0, interest:0, irritation:0 };
       const irrDelta = Math.round((Number(dh.irritation)||0) * this.char.irritation_sensitivity);
 
@@ -433,12 +440,15 @@ export class ClubScene extends Phaser.Scene {
       this.interest = Phaser.Math.Clamp(this.interest, -50, 999);
       this.irritation = Phaser.Math.Clamp(this.irritation, 0, 999);
 
+      // 4) 終了判定
       const threshold = this.char.irritation_threshold;
       const forceEnd = !!out?.flags?.forceEnd || (this.irritation >= threshold);
 
+      // 5) 表示
       this._renderTurn();
       this._showNpc(out?.npcText || '……');
 
+      // 6) ターン進行
       if (forceEnd){
         this._finishNight({ forced:true });
         return;
@@ -488,6 +498,7 @@ export class ClubScene extends Phaser.Scene {
         headers: { 'Content-Type':'application/json' },
         body: JSON.stringify(payload)
       });
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const json = await res.json();
@@ -545,53 +556,52 @@ export class ClubScene extends Phaser.Scene {
   _finishNight({ forced }){
     this.ended = true;
 
-    // ここで会話UIを消して「お時間です」だけ見せる
-    if (this.ui){
-      if (this.ui.backdrop) this.ui.backdrop.setVisible(false);
-      if (this.ui.nameText) this.ui.nameText.setVisible(false);
-      if (this.ui.bodyText) this.ui.bodyText.setVisible(false);
-    }
-    this.sendBtnBg.setVisible(false);
-    this.sendBtnTx.setVisible(false);
-    if (this.domInput) this.domInput.setVisible(false);
-
     const w = this.scale.width;
     const h = this.scale.height;
 
-    this.endOverlay = this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.40)
+    this.endOverlay = this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.35)
       .setDepth(4000)
       .setScrollFactor(0)
       .setInteractive();
 
     const hasBoy = this.textures.exists(this.boyKey);
     if (hasBoy){
-      this.endBoy = this.add.image(0, 0, this.boyKey)
+      this.endBoy = this.add.image(
+        w - Math.floor(w*0.16),
+        h - Math.floor(h*0.02),
+        this.boyKey
+      )
         .setOrigin(0.5, 1)
+        .setScale(0.62)
         .setDepth(4100)
         .setScrollFactor(0);
     } else {
       this.endBoy = null;
     }
 
-    this.endBox = this.add.rectangle(w/2, h - Math.floor(h*0.24), 10, 10, 0x000000, 0.70)
+    const boxW = Math.min(720, Math.floor(w*0.84));
+    const boxH = 86;
+    const boxY = h - Math.floor(h*0.18);
+
+    this.endBox = this.add.rectangle(w/2, boxY, boxW, boxH, 0x000000, 0.65)
       .setStrokeStyle(2, 0xffffff, 0.25)
       .setOrigin(0.5, 1)
       .setDepth(4100)
       .setScrollFactor(0);
 
-    this.endText = this.add.text(w/2, h - Math.floor(h*0.24) - 40, 'お時間です', {
-      fontSize:'22px',
-      color:'#ffffff'
-    })
+    this.endText = this.add.text(
+      w/2,
+      boxY - Math.floor(boxH*0.52),
+      'お時間です',
+      { fontSize:'22px', color:'#ffffff' }
+    )
       .setOrigin(0.5, 0.5)
       .setDepth(4101)
       .setScrollFactor(0);
 
-    // layout追従
-    this.scale.emit('resize');
-
     this.endOverlay.on('pointerdown', () => {
       this._cleanup();
+
       this.scene.stop('Club');
       this.scene.launch('ClubResult', {
         returnTo: this.returnTo,
@@ -609,28 +619,6 @@ export class ClubScene extends Phaser.Scene {
     this._cleanup();
     this.scene.stop('Club');
     this.scene.resume(this.returnTo);
-  }
-
-  _enterPortraitMode(){
-    // 既に保存済みなら触らない
-    if (this.game.registry.get('club_prev_size')) return;
-
-    const prev = { w: this.scale.gameSize.width, h: this.scale.gameSize.height };
-    this.game.registry.set('club_prev_size', prev);
-
-    // Clubだけ縦基準
-    this.scale.resize(720, 1280);
-    this.scale.refresh();
-  }
-
-  _leavePortraitMode(){
-    const prev = this.game.registry.get('club_prev_size');
-    if (!prev) return;
-
-    this.game.registry.remove('club_prev_size');
-
-    this.scale.resize(prev.w, prev.h);
-    this.scale.refresh();
   }
 
   _cleanup(){
@@ -656,8 +644,5 @@ export class ClubScene extends Phaser.Scene {
 
     if (this.sendBtnBg){ this.sendBtnBg.destroy(); this.sendBtnBg = null; }
     if (this.sendBtnTx){ this.sendBtnTx.destroy(); this.sendBtnTx = null; }
-
-    // Club終了で元サイズに戻す
-    this._leavePortraitMode();
   }
 }
