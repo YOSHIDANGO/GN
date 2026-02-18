@@ -139,7 +139,7 @@ export class ClubScene extends Phaser.Scene {
       input.autocapitalize = 'none';
       input.spellcheck = false;
       input.placeholder = 'ここに入力';
-
+      
       input.style.width = '100%';
       input.style.height = '48px';
       input.style.fontSize = '18px';
@@ -149,12 +149,9 @@ export class ClubScene extends Phaser.Scene {
       input.style.background = 'rgba(0,0,0,0.55)';
       input.style.color = '#fff';
       input.style.outline = 'none';
-      input.style.boxSizing = 'border-box';
-
-      wrap.appendChild(input);
-
-      this.domInput = this.add.dom(0, 0, wrap).setDepth(3000);
-      this.domInputEl = input;
+      
+      this.domInput = this.add.dom(0, 0, input).setDepth(3000);
+      this.domInputEl = input;      
 
       const doSend = () => {
         if (this.ended) return;
@@ -272,50 +269,49 @@ export class ClubScene extends Phaser.Scene {
         Math.max(10, Math.floor(h*0.02))
       );
 
-      // =========================
-      // bottom input bar (DOM + send btn)
-      // =========================
-      const bottomMargin = Math.max(12, Math.floor(h * 0.02));
-      const barH = Math.max(56, Math.floor(h * 0.08));
-      const barY = h - bottomMargin;
+    // =========================
+    // bottom input bar (DOM + send btn)
+    // =========================
+    const bottomMargin = Math.max(12, Math.floor(h * 0.02));
+    const barH = Math.max(56, Math.floor(h * 0.08));
+    const barY = h - bottomMargin;
 
-      const btnW = Math.min(210, Math.floor(w * 0.22));
-      const btnH = barH;
-      const gap = Math.max(10, Math.floor(w * 0.02));
+    const btnW = Math.min(210, Math.floor(w * 0.22));
+    const btnH = barH;
+    const gap = Math.max(10, Math.floor(w * 0.02));
 
-      const leftPad = Math.max(14, Math.floor(w * 0.03));
-      const rightPad = Math.max(14, Math.floor(w * 0.03));
+    const leftPad  = Math.max(14, Math.floor(w * 0.03));
+    const rightPad = Math.max(14, Math.floor(w * 0.03));
 
-      // 入力欄に回せる横幅（ゲーム座標）
-      const inputW_game = Math.max(220, w - leftPad - rightPad - btnW - gap);
+    const inputW = Math.max(220, w - leftPad - rightPad - btnW - gap);
+    const inputX = leftPad + inputW/2;
 
-      // 位置（ゲーム座標）
-      const inputX = leftPad + inputW_game / 2;
-      const btnX_raw = leftPad + inputW_game + gap + btnW / 2;
+    // displayScale（FITで拡大してる倍率）
+    const dsx = (this.scale.displayScale && this.scale.displayScale.x) ? this.scale.displayScale.x : 1;
+    const dsy = (this.scale.displayScale && this.scale.displayScale.y) ? this.scale.displayScale.y : 1;
 
-      // ボタンが右にはみ出さないようにクランプ
-      const btnX = Phaser.Math.Clamp(btnX_raw, btnW/2 + 2, w - btnW/2 - 2);
+    // DOM input（左）
+    if (this.domInput){
+    // Phaser座標はいつも通り
+    this.domInput.setPosition(inputX, barY - barH/2);
 
-      // =========================
-      // DOM input（左）
-      //   はみ出しの原因: FITのdisplayScaleでDOMが二重に拡大されることがある
-      //   対策: DOMだけ逆スケール + CSS幅はdisplayScaleで割る
-      // =========================
-      if (this.domInput){
-        const dsx = (this.scale.displayScale?.x) || 1;
-        const dsy = (this.scale.displayScale?.y) || 1;
+    // 逆スケール（効きすぎ防止で下限つける）
+    const invX = 1 / Math.max(0.25, dsx);
+    const invY = 1 / Math.max(0.25, dsy);
+    this.domInput.setScale(invX, invY);
 
-        // DOMの座標はゲーム座標で置く
-        this.domInput.setPosition(inputX, barY - barH/2);
+    // 幅はCSS pxなので displayScale で割る
+    const cssW = Math.max(180, Math.floor(inputW * invX));
+    this.domInput.node.style.width = `${cssW}px`;
+    this.domInput.node.style.maxWidth = `${cssW}px`;
+    this.domInput.node.style.boxSizing = 'border-box';
 
-        // DOMだけ逆スケールで二重拡大を打ち消す
-        this.domInput.setScale(1/dsx, 1/dsy);
-
-        // CSS幅(px)はdisplayScaleで割った値にする
-        const inputW_css = Math.max(140, Math.floor((inputW_game - 18) / dsx));
-        this.domInput.node.style.width = `${inputW_css}px`;
-        this.domInput.node.style.boxSizing = 'border-box';
-      }
+    // 中のinputも念のため100%に固定
+    if (this.domInputEl){
+        this.domInputEl.style.width = '100%';
+        this.domInputEl.style.boxSizing = 'border-box';
+    }
+    }
 
       // PC用見た目（スマホでは非表示）
       if (!this.isTouch){
