@@ -14,7 +14,7 @@ export class ClubScene extends Phaser.Scene {
     // 既存ボーイ画像キー（Field側から渡せる）
     this.boyKey = data?.boyKey || 'boy_normal';
 
-    // ★下のSceneに入力落とさない
+    // 下のSceneに入力落とさない
     this.input.setTopOnly(true);
 
     // スマホ判定（ざっくり）
@@ -24,22 +24,21 @@ export class ClubScene extends Phaser.Scene {
     this.pending = false;
 
     // =========================
-    // character def (暫定：cacheに無ければデフォ)
+    // character def
     // =========================
-    const defKey = `club_char_${this.characterId}`; // BootSceneで load.json('club_char_rei', ...) する想定
+    const defKey = `club_char_${this.characterId}`;
     const def = this.cache.json.get(defKey) || {};
 
     this.char = {
       id: this.characterId,
       name: def.name || 'レイ',
-      portraitKey: def.portraitKey || 'rei_normal', // 立ち絵キー（仮）
+      portraitKey: def.portraitKey || 'rei_normal',
       bgKey: def.bgKey || 'bg_shop_inside',
 
       irritation_threshold: Number(def.irritation_threshold ?? 70),
       irritation_sensitivity: Number(def.irritation_sensitivity ?? 1.0),
       forgiveness_rate: Number(def.forgiveness_rate ?? 2.0),
 
-      // 使うのは後でOK（MVPでは保持だけ）
       sexual_tolerance: Number(def.sexual_tolerance ?? 1.0),
       ego_tolerance: Number(def.ego_tolerance ?? 1.0),
       clingy_tolerance: Number(def.clingy_tolerance ?? 1.0)
@@ -63,7 +62,7 @@ export class ClubScene extends Phaser.Scene {
     // =========================
     // visuals
     // =========================
-    this.bg = this.add.image(0, 0, this.char.bgKey).setOrigin(0.5,0.5);
+    this.bg = this.add.image(0, 0, this.char.bgKey).setOrigin(0.5, 0.5);
 
     const fitBg = () => {
       const w = this.scale.width;
@@ -74,10 +73,10 @@ export class ClubScene extends Phaser.Scene {
       this.bg.setScale(Math.max(sx, sy));
     };
 
-    // Dialogue UI（NPCのセリフ表示に使う）
+    // Dialogue UI
     this.ui = new DialogueUI(this);
 
-    // 立ち絵（中央寄せで配置）
+    // 立ち絵（中央）
     this.portrait = this.add.image(0, 0, this.char.portraitKey)
       .setOrigin(0.5, 1)
       .setDepth(900);
@@ -88,7 +87,7 @@ export class ClubScene extends Phaser.Scene {
       color:'#ffffff'
     }).setShadow(2,2,'#000',2).setDepth(2000).setScrollFactor(0);
 
-    // 入力欄（PC用：スマホでは非表示）
+    // PC入力（スマホでは非表示）
     this.inputBox = this.add.rectangle(0, 0, 100, 46, 0x000000, 0.55)
       .setOrigin(0.5, 1)
       .setDepth(2000)
@@ -105,10 +104,7 @@ export class ClubScene extends Phaser.Scene {
     }).setAlpha(0.75).setDepth(2001).setScrollFactor(0);
 
     // デバッグ
-    this.debug = {
-      show: !!data?.debug,
-      text: null
-    };
+    this.debug = { show: !!data?.debug, text: null };
     if (this.debug.show){
       this.debug.text = this.add.text(0, 0, '', {
         fontSize:'14px',
@@ -116,7 +112,7 @@ export class ClubScene extends Phaser.Scene {
       }).setShadow(2,2,'#000',2).setDepth(2001).setScrollFactor(0);
     }
 
-    // 入力バッファ（PC用）
+    // PC入力バッファ
     this.buf = '';
     this.maxChars = 60;
 
@@ -125,23 +121,17 @@ export class ClubScene extends Phaser.Scene {
     // =========================
     this.domInput = null;
     this.domInputEl = null;
-    this.domFocused = false;
 
     if (this.isTouch){
-      const wrap = document.createElement('div');
-      wrap.style.width = '100%';
-      wrap.style.display = 'block';
-      wrap.style.boxSizing = 'border-box';
-
       const input = document.createElement('input');
       input.type = 'text';
       input.autocomplete = 'off';
       input.autocapitalize = 'none';
       input.spellcheck = false;
       input.placeholder = 'ここに入力';
-      
+
       input.style.width = '100%';
-      input.style.height = '48px';
+      input.style.height = '46px';
       input.style.fontSize = '18px';
       input.style.padding = '0 14px';
       input.style.borderRadius = '14px';
@@ -149,9 +139,10 @@ export class ClubScene extends Phaser.Scene {
       input.style.background = 'rgba(0,0,0,0.55)';
       input.style.color = '#fff';
       input.style.outline = 'none';
-      
+      input.style.boxSizing = 'border-box';
+
       this.domInput = this.add.dom(0, 0, input).setDepth(3000);
-      this.domInputEl = input;      
+      this.domInputEl = input;
 
       const doSend = () => {
         if (this.ended) return;
@@ -170,9 +161,6 @@ export class ClubScene extends Phaser.Scene {
           doSend();
         }
       });
-
-      input.addEventListener('focus', () => { this.domFocused = true; });
-      input.addEventListener('blur',  () => { this.domFocused = false; });
     }
 
     // スマホはPC入力UIを消す
@@ -196,7 +184,7 @@ export class ClubScene extends Phaser.Scene {
       fontSize:'18px',
       color:'#ffffff'
     })
-      .setOrigin(0.5, 1)
+      .setOrigin(0.5, 0.5)
       .setDepth(2001)
       .setScrollFactor(0);
 
@@ -213,7 +201,6 @@ export class ClubScene extends Phaser.Scene {
         return;
       }
 
-      // PCはbuf送信
       this._submit();
     });
 
@@ -224,7 +211,7 @@ export class ClubScene extends Phaser.Scene {
 
     this._onKeyDown = (ev) => {
       if (this.ended) return;
-      if (this.isTouch) return; // スマホはDOM側で入力
+      if (this.isTouch) return;
       if (this.pending) return;
 
       const k = ev.key;
@@ -244,7 +231,6 @@ export class ClubScene extends Phaser.Scene {
         this._endAndReturn();
         return;
       }
-
       if (k && k.length === 1){
         if (this.buf.length >= this.maxChars) return;
         this.buf += k;
@@ -269,51 +255,41 @@ export class ClubScene extends Phaser.Scene {
         Math.max(10, Math.floor(h*0.02))
       );
 
-    // =========================
-    // bottom input bar (DOM + send btn)
-    // =========================
-    const bottomMargin = Math.max(12, Math.floor(h * 0.02));
-    const barH = Math.max(56, Math.floor(h * 0.08));
-    const barY = h - bottomMargin;
+      // =========================
+      // bottom input bar (DOM + send btn)
+      // =========================
+      const bottomMargin = Math.max(12, Math.floor(h * 0.02));
+      const barH = Math.max(56, Math.floor(h * 0.08));
+      const barY = h - bottomMargin;
 
-    const btnW = Math.min(210, Math.floor(w * 0.22));
-    const btnH = barH;
-    const gap = Math.max(10, Math.floor(w * 0.02));
+      const btnW = Math.min(210, Math.floor(w * 0.22));
+      const btnH = barH;
+      const gap = Math.max(10, Math.floor(w * 0.02));
 
-    const leftPad  = Math.max(14, Math.floor(w * 0.03));
-    const rightPad = Math.max(14, Math.floor(w * 0.03));
+      const leftPad  = Math.max(14, Math.floor(w * 0.03));
+      const rightPad = Math.max(14, Math.floor(w * 0.03));
 
-    const inputW = Math.max(220, w - leftPad - rightPad - btnW - gap);
-    const inputX = leftPad + inputW/2;
+      const inputW = Math.max(180, w - leftPad - rightPad - btnW - gap);
+      const inputX = leftPad + inputW / 2;
 
-    // displayScale（FITで拡大してる倍率）
-    const dsx = (this.scale.displayScale && this.scale.displayScale.x) ? this.scale.displayScale.x : 1;
-    const dsy = (this.scale.displayScale && this.scale.displayScale.y) ? this.scale.displayScale.y : 1;
+      const btnX = leftPad + inputW + gap + btnW / 2; // ★これが無いと落ちる
 
-    // DOM input（左）
-    if (this.domInput){
-    // Phaser座標はいつも通り
-    this.domInput.setPosition(inputX, barY - barH/2);
+      // DOM input（左）
+      if (this.domInput){
+        this.domInput.setPosition(inputX, barY - barH/2);
 
-    // 逆スケール（効きすぎ防止で下限つける）
-    const invX = 1 / Math.max(0.25, dsx);
-    const invY = 1 / Math.max(0.25, dsy);
-    this.domInput.setScale(invX, invY);
+        // ここは無理にscale触らない。widthだけ渡す
+        this.domInput.node.style.width = `${inputW}px`;
+        this.domInput.node.style.maxWidth = `${inputW}px`;
+        this.domInput.node.style.boxSizing = 'border-box';
 
-    // 幅はCSS pxなので displayScale で割る
-    const cssW = Math.max(180, Math.floor(inputW * invX));
-    this.domInput.node.style.width = `${cssW}px`;
-    this.domInput.node.style.maxWidth = `${cssW}px`;
-    this.domInput.node.style.boxSizing = 'border-box';
+        if (this.domInputEl){
+          this.domInputEl.style.width = '100%';
+          this.domInputEl.style.boxSizing = 'border-box';
+        }
+      }
 
-    // 中のinputも念のため100%に固定
-    if (this.domInputEl){
-        this.domInputEl.style.width = '100%';
-        this.domInputEl.style.boxSizing = 'border-box';
-    }
-    }
-
-      // PC用見た目（スマホでは非表示）
+      // PC用見た目
       if (!this.isTouch){
         const boxW = Math.min(1180, w - leftPad*2);
         this.inputBox.setPosition(w/2, barY);
@@ -327,7 +303,7 @@ export class ClubScene extends Phaser.Scene {
       // 送信ボタン（右）
       this.sendBtnBg.setPosition(btnX, barY);
       this.sendBtnBg.setSize(btnW, btnH);
-      this.sendBtnTx.setPosition(btnX, barY - Math.floor(btnH*0.28));
+      this.sendBtnTx.setPosition(btnX, barY - Math.floor(btnH*0.5));
 
       // =========================
       // portrait（中央寄せ）
@@ -358,7 +334,6 @@ export class ClubScene extends Phaser.Scene {
     this._renderTurn();
     this._renderInput();
 
-    // まず1行目（仮）
     this._showNpc('いらっしゃい。今日はどうする');
   }
 
@@ -417,14 +392,11 @@ export class ClubScene extends Phaser.Scene {
     try {
       this.lastPlayerText = text;
 
-      // 1) irritation 自然減衰
       this.irritation = Math.max(0, this.irritation - this.irritationDecayPerTurn);
 
-      // 2) サーバ呼び出し
       const payload = this._makeTurnPayload(text);
       const out = await this._callServer(payload);
 
-      // 3) 反映
       const dh = out?.deltaHint || { affinity:0, interest:0, irritation:0 };
       const irrDelta = Math.round((Number(dh.irritation)||0) * this.char.irritation_sensitivity);
 
@@ -436,15 +408,12 @@ export class ClubScene extends Phaser.Scene {
       this.interest = Phaser.Math.Clamp(this.interest, -50, 999);
       this.irritation = Phaser.Math.Clamp(this.irritation, 0, 999);
 
-      // 4) 終了判定
       const threshold = this.char.irritation_threshold;
       const forceEnd = !!out?.flags?.forceEnd || (this.irritation >= threshold);
 
-      // 5) 表示
       this._renderTurn();
       this._showNpc(out?.npcText || '……');
 
-      // 6) ターン進行
       if (forceEnd){
         this._finishNight({ forced:true });
         return;
@@ -560,15 +529,16 @@ export class ClubScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive();
 
+    // 会話帯に被せないため、下端ベタ付けじゃなく少し上に出す
     const hasBoy = this.textures.exists(this.boyKey);
     if (hasBoy){
       this.endBoy = this.add.image(
-        w - Math.floor(w*0.16),
-        h - Math.floor(h*0.02),
+        w - Math.floor(w*0.18),
+        h - Math.floor(h*0.14),
         this.boyKey
       )
         .setOrigin(0.5, 1)
-        .setScale(0.62)
+        .setScale(0.58)
         .setDepth(4100)
         .setScrollFactor(0);
     } else {
@@ -577,7 +547,7 @@ export class ClubScene extends Phaser.Scene {
 
     const boxW = Math.min(720, Math.floor(w*0.84));
     const boxH = 86;
-    const boxY = h - Math.floor(h*0.18);
+    const boxY = h - Math.floor(h*0.20);
 
     this.endBox = this.add.rectangle(w/2, boxY, boxW, boxH, 0x000000, 0.65)
       .setStrokeStyle(2, 0xffffff, 0.25)
