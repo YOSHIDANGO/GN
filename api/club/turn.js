@@ -150,7 +150,8 @@ export default async function handler(req, res) {
     // =========================
     // 強制終了
     // =========================
-    const endLine = clamp(threshold, 0, 100);
+    //const endLine = clamp(threshold, 0, 100);
+    const endLine = clamp(threshold - (isRude ? 15 : 0), 0, 100);
     const forceEnd = predictedIrr >= endLine;
   
     npcText = limitJP(npcText, 120);

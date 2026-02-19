@@ -126,17 +126,6 @@ export class FieldScene extends Phaser.Scene {
     // =========================
     this._initWalkableOutside();
 
-    /*
-    // ヘルプ（UI固定）
-    this.help = this.add.text(
-      20, 20,
-      'タップで移動 / NPCタップで会話 / ドアタップで出入り',
-      { fontSize:'18px', color:'#fff' }
-    ).setShadow(2,2,'#000',2)
-     .setScrollFactor(0)
-     .setDepth(2000);
-    */
-
     // =========================
     // ★入力消費フラグ（ドア/NPCタップ時に通常移動を止める）
     // =========================
@@ -144,6 +133,9 @@ export class FieldScene extends Phaser.Scene {
 
     // タップ移動
     this.modalOpen = false;
+
+    // ★resume理由（Dialogueから戻った時だけ resume処理を走らせる）
+    this._resumeReason = '';
 
     // =========================
     // 演出 / FX
@@ -284,9 +276,15 @@ export class FieldScene extends Phaser.Scene {
 
     // Dialogueが閉じて Field が resume されたら、次のイベントへ
     this.events.on('resume', () => {
-        if (this.ev && this.ev.running) {
-            this.ev.resume();
-        }
+      const reason = this._resumeReason || '';
+      this._resumeReason = '';
+
+      // ★Dialogueから戻った時だけ、会話後処理を走らせる
+      if (reason !== 'dialogue') return;
+
+      if (this.ev && this.ev.running) {
+        this.ev.resume();
+      }
 
       // ★会話後に解禁反映（入店イベント→出現）
       if (this.mode === 'inside'){
@@ -685,6 +683,9 @@ export class FieldScene extends Phaser.Scene {
   }
 
   _launchDialogue(scriptKey, bgKey){
+    // ★resume理由をセット
+    this._resumeReason = 'dialogue';
+
     this.scene.pause();
     this.scene.launch('Dialogue', {
       scriptKey,
@@ -1139,8 +1140,8 @@ export class FieldScene extends Phaser.Scene {
     });
 
     this.boyBtnPlay = mkBtn('お店で遊ぶ', ()=>{
-        this._closeBoyMenu();
-        this._startClubMode();
+      this._closeBoyMenu();
+      this._startClubMode();
     });
 
     this.boyBtnClose = mkBtn('やめる', ()=>{
@@ -1148,13 +1149,13 @@ export class FieldScene extends Phaser.Scene {
     });
 
     this.boyMenu.add([
-        this.boyMenuBg,
-        this.boyMenuTitle,
-        this.boyBtnHeal.bg, this.boyBtnHeal.tx,
-        this.boyBtnSave.bg, this.boyBtnSave.tx,
-        this.boyBtnPlay.bg, this.boyBtnPlay.tx,
-        this.boyBtnClose.bg, this.boyBtnClose.tx,
-        this.boyMenuHint
+      this.boyMenuBg,
+      this.boyMenuTitle,
+      this.boyBtnHeal.bg, this.boyBtnHeal.tx,
+      this.boyBtnSave.bg, this.boyBtnSave.tx,
+      this.boyBtnPlay.bg, this.boyBtnPlay.tx,
+      this.boyBtnClose.bg, this.boyBtnClose.tx,
+      this.boyMenuHint
     ]);
 
     this._onResizeMenu = () => this._relayoutMenus();
@@ -1165,67 +1166,67 @@ export class FieldScene extends Phaser.Scene {
 
   _relayoutMenus(){
     if (!this.boyMenuBg) return;
-  
+
     const w = this.scale.width;
     const h = this.scale.height;
-  
+
     const cx = w/2;
     const cy = h/2;
-  
+
     const panelW = Math.min(820, w - 40);
     const padX = Math.max(20, Math.floor(panelW * 0.05));
     const padY = 22;
-  
+
     // ボタンサイズ（タップ優先で大きめ）
     const btnH = Math.max(64, Math.floor(h * 0.095));
     const gapX = Math.max(14, Math.floor(panelW * 0.03));
     const gapY = Math.max(14, Math.floor(btnH * 0.25));
-  
+
     // 4ボタンなので2列固定（2x2）
     const btnW = Math.floor((panelW - padX*2 - gapX) / 2);
-  
+
     // タイトル・ヒント
     const titleFs = Math.min(22, Math.max(18, Math.floor(h * 0.028)));
     const hintFs  = Math.min(18, Math.max(14, Math.floor(h * 0.022)));
-  
+
     this.boyMenuTitle.setFontSize(titleFs);
     this.boyMenuHint.setFontSize(hintFs);
-  
+
     const placeBtn = (btn, x, y) => {
       btn.bg.setPosition(x, y);
       btn.bg.setSize(btnW, btnH);
       btn.tx.setPosition(x, y);
     };
-  
+
     // ボタン配置（2x2）
     const topY  = cy - Math.floor(btnH * 1.05);
     const leftX  = cx - (btnW/2 + gapX/2);
     const rightX = cx + (btnW/2 + gapX/2);
     const row2Y  = topY + btnH + gapY;
-  
+
     placeBtn(this.boyBtnHeal,  leftX,  topY);
     placeBtn(this.boyBtnSave,  rightX, topY);
     placeBtn(this.boyBtnPlay,  leftX,  row2Y);
     placeBtn(this.boyBtnClose, rightX, row2Y);
-  
+
     // 背景サイズ
     const contentH = (btnH*2 + gapY);
     const panelH =
       padY + Math.floor(titleFs * 1.6) + 14 +
       contentH +
       16 + Math.floor(hintFs * 1.6) + padY;
-  
+
     this.boyMenuBg.setPosition(cx, cy);
     this.boyMenuBg.setSize(panelW, panelH);
-  
+
     const topPanel = cy - panelH/2;
-  
+
     this.boyMenuTitle.setPosition(cx - panelW/2 + padX, topPanel + padY);
     this.boyMenuHint.setPosition(
       cx - panelW/2 + padX,
       topPanel + panelH - padY - Math.floor(hintFs * 1.2)
     );
-  }  
+  }
 
   _openBoyMenu(boyNpc){
     this.modalOpen = true;
@@ -1254,11 +1255,14 @@ export class FieldScene extends Phaser.Scene {
   _startClubMode(){
     // 位置復元用に保存
     this._saveFieldPos();
-  
+
+    // ★resume理由をclubにする（resumeで会話扱いにしない）
+    this._resumeReason = 'club';
+
     // ボーイメニュー状態を綺麗に閉じる
     this.modalOpen = false;
     this.boyMenu?.setVisible(false);
-  
+
     // Fieldを止めてClubを上に起動
     this.scene.pause('Field');
     this.scene.launch('Club', {
@@ -1266,7 +1270,7 @@ export class FieldScene extends Phaser.Scene {
       characterId: 'rei',
       debug: false
     });
-  } 
+  }
 
   // =========================
   // rematch menu
@@ -1534,6 +1538,8 @@ export class FieldScene extends Phaser.Scene {
             // ★会話 → 会話後に再戦メニュー
             this.postDialogueAction = { type:'rematch', enemyId:spr.enemyId };
 
+            // ★resume理由をセット
+            this._resumeReason = 'dialogue';
             this.scene.pause();
             this.scene.launch('Dialogue', {
               scriptKey: `npc_cabajo_after_${spr.enemyId}`,
@@ -1550,6 +1556,7 @@ export class FieldScene extends Phaser.Scene {
         }
 
         // 通常：会話
+        this._resumeReason = 'dialogue';
         this.scene.pause();
         this.scene.launch('Dialogue', {
           scriptKey: spr.scriptKey,
@@ -1780,7 +1787,7 @@ export class FieldScene extends Phaser.Scene {
           this._startClubMode();
         }
         return;
-      }      
+      }
       if (Phaser.Input.Keyboard.JustDown(this.keys.ESC) || Phaser.Input.Keyboard.JustDown(this.keys.SPACE)){
         if (this.boyMenu?.visible) this._closeBoyMenu();
         if (this.rematchMenu?.visible) this._closeRematchMenu();
@@ -1944,6 +1951,8 @@ export class FieldScene extends Phaser.Scene {
             // ★会話 → 会話後に再戦メニュー
             this.postDialogueAction = { type:'rematch', enemyId:nearest.enemyId };
 
+            // ★resume理由をセット
+            this._resumeReason = 'dialogue';
             this.scene.pause();
             this.scene.launch('Dialogue', {
               scriptKey: `npc_cabajo_after_${nearest.enemyId}`,
@@ -1958,6 +1967,7 @@ export class FieldScene extends Phaser.Scene {
           return;
         }
 
+        this._resumeReason = 'dialogue';
         this.scene.pause();
         this.scene.launch('Dialogue', {
           scriptKey: nearest.scriptKey,
