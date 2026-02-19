@@ -553,7 +553,7 @@ export class ClubScene extends Phaser.Scene {
       this.endOverlay.on('pointerdown', () => {
         this._cleanup();
 
-        this.scene.stop('Club');
+        // ★順番大事：先に Result を起動してから Club を止める
         this.scene.launch('ClubResult', {
           returnTo: this.returnTo,
           characterId: this.characterId,
@@ -563,14 +563,22 @@ export class ClubScene extends Phaser.Scene {
           threshold: this.char.irritation_threshold,
           forced: !!forced
         });
+        this.scene.bringToTop('ClubResult');
+
+        // ★Club を確実に stop（残留潰し）
+        this.scene.stop('Club');
       });
     });
   }
 
   _endAndReturn(){
     this._cleanup();
+
+    // ★resume してから stop（Club 残留潰し）
+    if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
+    this.scene.bringToTop(this.returnTo);
+
     this.scene.stop('Club');
-    this.scene.resume(this.returnTo);
   }
 
   _cleanup(){
