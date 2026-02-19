@@ -1,3 +1,4 @@
+// game/assets/js/runtime/makeGame.js
 import { BootScene } from '../scenes/BootScene.js';
 import { TitleScene } from '../scenes/TitleScene.js';
 import { FieldScene } from '../scenes/FieldScene.js';
@@ -8,33 +9,21 @@ import { EndingScene } from '../scenes/EndingScene.js';
 import { ClubScene } from '../scenes/ClubScene.js';
 import { ClubResultScene } from '../scenes/ClubResultScene.js';
 
-
-// game/assets/js/runtime/makeGame.js
 export function makeGame(page){
-
   const isLandscape = window.innerWidth > window.innerHeight;
 
   const config = {
     type: Phaser.AUTO,
     parent: 'game',
     backgroundColor: '#0b0b10',
-
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
-
-      // ★画面サイズ
       width: isLandscape ? 1600 : 1280,
       height: 720
     },
-
     input: { activePointers: 2 },
-
-    // ★ここ追加（スマホ入力用）
-    dom: {
-      createContainer: true
-    },
-
+    dom: { createContainer: true },
     scene: [
       BootScene,
       TitleScene,
@@ -46,17 +35,17 @@ export function makeGame(page){
       ClubScene,
       ClubResultScene
     ],
-
-    physics: {
-      default: 'arcade',
-      arcade: { debug: false }
-    }
+    physics: { default: 'arcade', arcade: { debug: false } }
   };
 
-  const ph = new Phaser.Game(config);
-  window.__PHASER_GAME__ = ph;
-  
-  ph.registry.set('startPage', page);
+  // ★ここが重要：ローカル変数で受ける
+  const phaserGame = new Phaser.Game(config);
+
+  // ★グローバルも div と被らない名前に
+  window.__PHASER_GAME__ = phaserGame;
+  window.phaserGame = phaserGame;
+
+  phaserGame.registry.set('startPage', page);
 
   const root = document.getElementById('game');
 
@@ -90,18 +79,14 @@ export function makeGame(page){
       const h = Math.floor(hRaw / 2) * 2;
 
       if (w === lastW && h === lastH && top === lastTop) return;
-      lastW = w;
-      lastH = h;
-      lastTop = top;
+      lastW = w; lastH = h; lastTop = top;
 
       root.style.width  = `${w}px`;
       root.style.height = `${h}px`;
-
-      // ★キーボードでviewportがズレるのを吸収
       root.style.transform = `translateY(${top}px)`;
       root.style.transformOrigin = 'top left';
 
-      if (game.scale) game.scale.refresh();
+      if (phaserGame.scale) phaserGame.scale.refresh();
     });
   };
 
@@ -112,5 +97,5 @@ export function makeGame(page){
     window.visualViewport.addEventListener('scroll', fitRoot, { passive: true });
   }
 
-  return ph;
+  return phaserGame;
 }
