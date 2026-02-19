@@ -176,6 +176,10 @@ export class ClubScene extends Phaser.Scene {
 
     this.events.once('shutdown', () => this._cleanup());
     this.events.once('destroy', () => this._cleanup());
+
+    this.events.once('sleep', () => {
+        this._cleanup();
+    });
   }
 
   update(){
@@ -310,13 +314,32 @@ export class ClubScene extends Phaser.Scene {
       input.blur();
     };
 
-    btn.addEventListener('click', doSend);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter'){
-        e.preventDefault();
+    const onBtnClick = (e) => {
+        e?.preventDefault?.();
+        e?.stopPropagation?.();
         doSend();
-      }
-    });
+    };
+    
+    const onInputKeyDown = (e) => {
+    if (e.key === 'Enter'){
+        e.preventDefault();
+        e.stopPropagation();
+        doSend();
+    }
+    };
+    
+    // タッチの伝播を止める（Phaser側のpointerdownに流さない）
+    const onTouch = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    };
+    
+    btn.addEventListener('click', onBtnClick);
+    input.addEventListener('keydown', onInputKeyDown);
+    bar.addEventListener('touchstart', onTouch, { passive:false });
+    bar.addEventListener('touchmove',  onTouch, { passive:false });
+    
+    this._fixedHandlers = { onBtnClick, onInputKeyDown, onTouch };
 
     this._fixedBar = bar;
     this._fixedInput = input;
@@ -325,12 +348,29 @@ export class ClubScene extends Phaser.Scene {
 
   _destroyFixedInputBar(){
     if (this._fixedBar){
-      this._fixedBar.remove();
-      this._fixedBar = null;
-      this._fixedInput = null;
-      this._fixedSend = null;
+      const bar = this._fixedBar;
+      const input = this._fixedInput;
+      const btn = this._fixedSend;
+      const h = this._fixedHandlers;
+  
+      try{
+        if (h && btn) btn.removeEventListener('click', h.onBtnClick);
+        if (h && input) input.removeEventListener('keydown', h.onInputKeyDown);
+        if (h && bar){
+          bar.removeEventListener('touchstart', h.onTouch);
+          bar.removeEventListener('touchmove', h.onTouch);
+        }
+      }catch(_){}
+  
+      bar.remove();
     }
+  
+    this._fixedBar = null;
+    this._fixedInput = null;
+    this._fixedSend = null;
+    this._fixedHandlers = null;
   }
+  
 
   _setFixedBarEnabled(enabled){
     if (!this.isTouch) return;
