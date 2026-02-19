@@ -244,10 +244,10 @@ export class ClubScene extends Phaser.Scene {
   // =========================
   _createFixedInputBar(){
     this._destroyFixedInputBar();
-
+  
     const bar = document.createElement('div');
     bar.id = 'club-fixed-bar';
-
+  
     bar.style.position = 'fixed';
     bar.style.left = '0';
     bar.style.right = '0';
@@ -258,7 +258,7 @@ export class ClubScene extends Phaser.Scene {
     bar.style.backdropFilter = 'blur(6px)';
     bar.style.webkitBackdropFilter = 'blur(6px)';
     bar.style.boxSizing = 'border-box';
-
+  
     bar.innerHTML = `
       <div style="
         display:flex;
@@ -296,56 +296,72 @@ export class ClubScene extends Phaser.Scene {
         >送信</button>
       </div>
     `;
-
+  
     document.body.appendChild(bar);
-
+  
     const input = bar.querySelector('#club-fixed-input');
     const btn = bar.querySelector('#club-fixed-send');
-
+  
+    // 保険：取れなかったら消して終わり
+    if (!input || !btn){
+      bar.remove();
+      return;
+    }
+  
     const doSend = () => {
       if (this.ended) return;
       if (this.pending) return;
-
+  
       const v = (input.value || '').trim();
       if (!v) return;
-
+  
       input.value = '';
       this._submitText(v);
       input.blur();
     };
-
+  
     const onBtnClick = (e) => {
-        e?.preventDefault?.();
-        e?.stopPropagation?.();
-        doSend();
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      doSend();
     };
-    
+  
+    // スマホ安定用：click以外も拾う
+    const onBtnPointerDown = (e) => {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      doSend();
+    };
+  
     const onInputKeyDown = (e) => {
-    if (e.key === 'Enter'){
+      if (e.key === 'Enter'){
         e.preventDefault();
         e.stopPropagation();
         doSend();
-    }
+      }
     };
-    
+  
     // タッチの伝播を止める（Phaser側のpointerdownに流さない）
     const onTouch = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation();
     };
-    
+  
     btn.addEventListener('click', onBtnClick);
+    btn.addEventListener('pointerdown', onBtnPointerDown);
+  
     input.addEventListener('keydown', onInputKeyDown);
+  
     bar.addEventListener('touchstart', onTouch, { passive:false });
     bar.addEventListener('touchmove',  onTouch, { passive:false });
-    
-    this._fixedHandlers = { onBtnClick, onInputKeyDown, onTouch };
-
+  
+    this._fixedHandlers = { onBtnClick, onBtnPointerDown, onInputKeyDown, onTouch };
+  
     this._fixedBar = bar;
     this._fixedInput = input;
     this._fixedSend = btn;
   }
-
+  
   _destroyFixedInputBar(){
     if (this._fixedBar){
       const bar = this._fixedBar;
@@ -354,7 +370,10 @@ export class ClubScene extends Phaser.Scene {
       const h = this._fixedHandlers;
   
       try{
-        if (h && btn) btn.removeEventListener('click', h.onBtnClick);
+        if (h && btn){
+          btn.removeEventListener('click', h.onBtnClick);
+          btn.removeEventListener('pointerdown', h.onBtnPointerDown);
+        }
         if (h && input) input.removeEventListener('keydown', h.onInputKeyDown);
         if (h && bar){
           bar.removeEventListener('touchstart', h.onTouch);
