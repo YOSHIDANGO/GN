@@ -1255,24 +1255,25 @@ export class FieldScene extends Phaser.Scene {
   }
 
   _startClubMode(){
-    // 位置復元用に保存
     this._saveFieldPos();
-
-    // ★resume理由をclubにする（resumeで会話扱いにしない）
-    this._resumeReason = 'club';
-
-    // ボーイメニュー状態を綺麗に閉じる
+  
+    // メニュー閉じ
     this.modalOpen = false;
     this.boyMenu?.setVisible(false);
-
-    // Fieldを止めてClubを上に起動
+  
+    // ★ Fieldは「止める＋見えなくする」
     this.scene.pause('Field');
+    this.scene.setVisible(false, 'Field');
+  
+    // ★ Clubを起動して最前面へ
     this.scene.launch('Club', {
       returnTo: 'Field',
       characterId: 'rei',
       debug: false
     });
+    this.scene.bringToTop('Club');
   }
+  
 
   // =========================
   // rematch menu

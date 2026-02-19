@@ -266,30 +266,83 @@ export class ClubResultScene extends Phaser.Scene {
   }
 
   _retry(){
-    // ★Clubの残骸を止めてから起動
+    // 連打ガード（あれば）
+    if (this._busy) return;
+    this._busy = true;
+  
+    // ★Clubの残骸を止める
     if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
       this.scene.stop('Club');
     }
-
-    // returnTo を止める（見た目の二重起動回避）
-    if (this.returnTo && this.scene.isActive(this.returnTo) && !this.scene.isPaused(this.returnTo)){
-      this.scene.pause(this.returnTo);
-    } else if (this.returnTo && this.scene.isSleeping(this.returnTo)){
-      this.scene.wake(this.returnTo);
-      this.scene.pause(this.returnTo);
-    }
-
+  
+    // ★returnTo（Fieldなど）を「止める＋見えなくする」
+    this._hideReturnScene(this.returnTo);
+  
+    // 自分を閉じてから起動（順序大事）
     this.scene.stop('ClubResult');
+  
     this.scene.launch('Club', {
       returnTo: this.returnTo,
       characterId: this.characterId
     });
     this.scene.bringToTop('Club');
   }
-
+  
   _goBack(){
+    if (this._busy) return;
+    this._busy = true;
+  
+    // ★returnTo（Fieldなど）を「見える＋動かす」
     this._reviveReturnScene(this.returnTo);
+  
+    // Clubが生きてたら止める（保険）
+    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
+      this.scene.stop('Club');
+    }
+  
     this.scene.stop('ClubResult');
   }
+  
+  // =========================
+  // helpers
+  // =========================
+  
+  // returnTo を「pause + visible=false」にする
+  _hideReturnScene(key){
+    if (!key) return;
+  
+    // sceneが存在する時だけ
+    const s = this.scene.getScene(key);
+    if (!s) return;
+  
+    // visible を確実に落とす（これが最重要）
+    this.scene.setVisible(false, key);
+  
+    // 動いてたら止める
+    if (this.scene.isActive(key) && !this.scene.isPaused(key)){
+      this.scene.pause(key);
+    } else if (this.scene.isSleeping(key)){
+      // sleepingなら一回wakeしてからpause（保険）
+      this.scene.wake(key);
+      this.scene.pause(key);
+    }
+  }
+  
+  // returnTo を「visible=true + resume」にする
+  _reviveReturnScene(key){
+    if (!key) return;
+  
+    const s = this.scene.getScene(key);
+    if (!s) return;
+  
+    this.scene.setVisible(true, key);
+  
+    if (this.scene.isPaused(key)){
+      this.scene.resume(key);
+    } else if (this.scene.isSleeping(key)){
+      this.scene.wake(key);
+    }
+  }
+  
   
 }
