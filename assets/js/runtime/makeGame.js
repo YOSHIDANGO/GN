@@ -53,8 +53,10 @@ export function makeGame(page){
     }
   };
 
-  window.game = new Phaser.Game(config);
-  game.registry.set('startPage', page);
+  const ph = new Phaser.Game(config);
+  window.__PHASER_GAME__ = ph;
+  
+  ph.registry.set('startPage', page);
 
   const root = document.getElementById('game');
 
@@ -110,5 +112,5 @@ export function makeGame(page){
     window.visualViewport.addEventListener('scroll', fitRoot, { passive: true });
   }
 
-  return game;
+  return ph;
 }
