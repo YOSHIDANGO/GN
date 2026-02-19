@@ -53,7 +53,7 @@ export function makeGame(page){
     }
   };
 
-  const game = new Phaser.Game(config);
+  window.game = new Phaser.Game(config);
   game.registry.set('startPage', page);
 
   const root = document.getElementById('game');

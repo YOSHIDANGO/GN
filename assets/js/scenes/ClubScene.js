@@ -448,23 +448,42 @@ export class ClubScene extends Phaser.Scene {
   
       let json = await res.json();
       if (!json || typeof json !== 'object') json = {};
-  
-      // ここ以下は今の整形そのまま
-      ...
+
+      if (typeof json.npcText !== 'string') json.npcText = '……';
+
+      if (!json.signals || typeof json.signals !== 'object'){
+        json.signals = { mood:'soft', distance:0 };
+      } else {
+        if (typeof json.signals.mood !== 'string') json.signals.mood = 'soft';
+        if (typeof json.signals.distance !== 'number') json.signals.distance = 0;
+      }
+
+      if (!json.delta || typeof json.delta !== 'object'){
+        json.delta = { affinity:0, interest:0, irritation:0 };
+      } else {
+        json.delta.affinity = Number(json.delta.affinity || 0);
+        json.delta.interest = Number(json.delta.interest || 0);
+        json.delta.irritation = Number(json.delta.irritation || 0);
+      }
+
+      if (!json.flags || typeof json.flags !== 'object'){
+        json.flags = { forceEnd:false };
+      } else {
+        json.flags.forceEnd = !!json.flags.forceEnd;
+      }
+
       return json;
-  
+
     } catch (e){
+      // サーバ死んだ時：最低限の形
       return {
         npcText: 'ごめん、聞き取れなかった',
         signals: { mood:'neutral', distance:0 },
         delta: { affinity:0, interest:0, irritation:0 },
         flags: { forceEnd:false }
       };
-    } finally {
-      clearTimeout(timer);
     }
   }
-  
 
   // =========================
   // end flow (boy)

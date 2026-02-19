@@ -34,9 +34,6 @@ export class FieldScene extends Phaser.Scene {
     if (!this.state.flags){
       this.state.flags = { firstDayIntroShown:false, openingShown:false, bossUnlocked:false };
     }
-    if (!this.state.flags){
-      this.state.flags = { firstDayIntroShown:false, openingShown:false, bossUnlocked:false };
-    }
 
     // ★エンディング用フラグの初期化（保険）
     if (!('endingPending' in this.state.flags)){
