@@ -97,13 +97,9 @@ export class ClubScene extends Phaser.Scene {
     }
 
     // =========================
-    // PC input buffer（見た目は出さない）
-    // =========================
-    this.buf = '';
-    this.maxChars = 60;
-
-    // =========================
-    // fixed input bar (スマホ用 / DOMはPhaser外)
+    // input bar (PC & mobile)
+    //  - DOM input is used so IME (Japanese) works
+    //  - bar is attached inside #game root so it follows viewport transforms
     // =========================
     this._fixedBar = null;
     this._fixedInput = null;
@@ -111,44 +107,10 @@ export class ClubScene extends Phaser.Scene {
     this._fixedHandlers = null;
     this._imeComposing = false;
 
-    if (this.isTouch){
-      this._createFixedInputBar();
-    }
+    this._createFixedInputBar();
 
-    // =========================
-    // interaction (PC)
-    // =========================
-    this.keyEsc = this.input.keyboard.addKey('ESC');
-
-    this._onKeyDown = (ev) => {
-      if (this.ended) return;
-      if (this.isTouch) return;
-      if (this.pending) return;
-
-      const k = ev.key;
-
-      if (k === 'Enter'){
-        ev.preventDefault?.();
-        this._submit();
-        return;
-      }
-      if (k === 'Backspace'){
-        ev.preventDefault?.();
-        this.buf = this.buf.slice(0, -1);
-        return;
-      }
-      if (k === 'Escape'){
-        this._endAndReturn();
-        return;
-      }
-
-      if (k && k.length === 1){
-        if (this.buf.length >= this.maxChars) return;
-        this.buf += k;
-      }
-    };
-
-    this.input.keyboard.on('keydown', this._onKeyDown);
+    // PC safety: ESC to end
+    this.keyEsc = this.input.keyboard?.addKey?.(Phaser.Input.Keyboard.KeyCodes.ESC);
 
     // =========================
     // resize/layout
@@ -226,20 +188,25 @@ export class ClubScene extends Phaser.Scene {
   // fixed input bar helpers
   // =========================
   _createFixedInputBar(){
+    // important: blur before remove so mobile doesn't get stuck showing only the keyboard
+    try{ this._fixedInput?.blur?.(); }catch(_){ }
     this._destroyFixedInputBar();
+
+    // Attach inside the Phaser root so it follows viewport transforms (keyboard / visualViewport shifts)
+    const root = document.getElementById('game') || document.body;
 
     const bar = document.createElement('div');
     bar.id = 'club-fixed-bar';
 
-    bar.style.position = 'fixed';
+    bar.style.position = 'absolute';
     bar.style.left = '0';
     bar.style.right = '0';
     bar.style.bottom = '0';
     bar.style.zIndex = '99999';
     bar.style.padding = '10px 12px calc(10px + env(safe-area-inset-bottom)) 12px';
-    bar.style.background = 'rgba(0,0,0,0.35)';
-    bar.style.backdropFilter = 'blur(6px)';
-    bar.style.webkitBackdropFilter = 'blur(6px)';
+    // Don't hide the in-canvas dialogue box behind a full-width dark panel.
+    // Only the input/button should be interactive.
+    bar.style.background = 'transparent';
     bar.style.boxSizing = 'border-box';
 
     bar.innerHTML = `
@@ -280,7 +247,9 @@ export class ClubScene extends Phaser.Scene {
       </div>
     `;
 
-    document.body.appendChild(bar);
+    // container itself doesn't take pointer events (so Dialogue / canvas remains tappable)
+    bar.style.pointerEvents = 'none';
+    root.appendChild(bar);
 
     const input = bar.querySelector('#club-fixed-input');
     const btn = bar.querySelector('#club-fixed-send');
@@ -289,6 +258,10 @@ export class ClubScene extends Phaser.Scene {
       bar.remove();
       return;
     }
+
+    // container is pointerEvents:none, so enable controls explicitly
+    input.style.pointerEvents = 'auto';
+    btn.style.pointerEvents = 'auto';
 
     // ★バー高さを記録（レイアウトで使う）
     this._fixedBarCssPx = Math.ceil(bar.getBoundingClientRect().height);
@@ -401,7 +374,6 @@ export class ClubScene extends Phaser.Scene {
   }
 
   _setFixedBarEnabled(enabled){
-    if (!this.isTouch) return;
     if (!this._fixedInput || !this._fixedSend) return;
 
     this._fixedInput.disabled = !enabled;
@@ -412,7 +384,6 @@ export class ClubScene extends Phaser.Scene {
   }
 
   _updateFixedBarWorldPx(){
-    if (!this.isTouch) { this._fixedBarWorldPx = 0; return; }
     if (!this._fixedBar) { this._fixedBarWorldPx = 0; return; }
 
     // CSS px を world px に換算

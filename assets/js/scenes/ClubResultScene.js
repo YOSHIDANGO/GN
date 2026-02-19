@@ -1,348 +1,148 @@
-// assets/js/scenes/ClubResultScene.js
-import { loadSave, storeSave, defaultSave } from '../core/save.js';
-
 export class ClubResultScene extends Phaser.Scene {
-  constructor(){ super('ClubResult'); }
+  constructor(){
+    super('ClubResult');
+  }
 
-  create(data){
-    // data: { returnTo, characterId, affinity, interest, irritation, threshold, forced }
+  init(data){
     this.returnTo = data?.returnTo || 'Field';
-    this.characterId = data?.characterId || 'rei';
+    this.characterId = data?.characterId || null;
+    // support both {result:{...}} and the older flat payload
+    this.result = data?.result || {
+      affinity: data?.affinity,
+      interest: data?.interest,
+      irritation: data?.irritation,
+      threshold: data?.threshold,
+      forced: data?.forced
+    };
+    this._busy = false;
+  }
 
-    const affinity = Number(data?.affinity ?? 0);
-    const interest = Number(data?.interest ?? 0);
-    const irritation = Number(data?.irritation ?? 0);
-    const threshold = Number(data?.threshold ?? 70);
-    const forced = !!data?.forced;
+  create(){
+    const { width:w, height:h } = this.scale;
 
-    const score = affinity + interest - irritation;
+    // 背景
+    this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.75).setDepth(0);
 
-    let rank = 'C';
-    if (forced || irritation >= threshold){
-      rank = 'D';
-    } else if (score >= 15){
-      rank = 'A';
-    } else if (score >= 5){
-      rank = 'B';
-    } else {
-      rank = 'C';
-    }
-
-    // セーブ反映
-    this._applyResultToSave({
-      characterId: this.characterId,
-      rank,
-      score,
-      affinity,
-      interest,
-      irritation,
-      threshold,
-      forced
-    });
-
-    // =========================
-    // UI
-    // =========================
-    const w = this.scale.width;
-    const h = this.scale.height;
-
-    // このシーンが最前面で入力受ける
-    this.input.setTopOnly(true);
-
-    // 背景暗幕
-    this.add.rectangle(w/2, h/2, w, h, 0x000000, 0.72).setScrollFactor(0);
-
-    // パネル（余白増やす）
-    const panelW = Math.min(980, w - 50);
-    const panelH = Math.min(610, h - 110);
-
-    this.add.rectangle(w/2, h/2, panelW, panelH, 0x000000, 0.55)
-      .setStrokeStyle(2, 0xffffff, 0.25)
-      .setScrollFactor(0);
-
-    // タイトル
-    this.add.text(w/2, h/2 - panelH/2 + 26, 'Result', {
-      fontSize: '28px',
+    const title = this.add.text(w/2, Math.floor(h*0.22), 'RESULT', {
+      fontFamily: 'sans-serif',
+      fontSize: '42px',
       color: '#ffffff'
-    }).setOrigin(0.5, 0).setScrollFactor(0);
+    }).setOrigin(0.5).setDepth(1);
 
-    // ランク
-    this.add.text(w/2, h/2 - 70, `Rank ${rank}`, {
-      fontSize: '64px',
-      color: '#ffffff'
-    }).setOrigin(0.5).setScrollFactor(0);
+    const lines = [];
+    if (this.result?.win != null) lines.push(this.result.win ? 'WIN' : 'LOSE');
+    if (typeof this.result?.score === 'number') lines.push(`SCORE: ${this.result.score}`);
 
-    // 詳細
-    const lines = [
-      `affinity: ${affinity}`,
-      `interest: ${interest}`,
-      `irritation: ${irritation} / ${threshold}`,
-      `score: ${score}`
-    ];
+    if (typeof this.result?.affinity === 'number') lines.push(`好感度: ${this.result.affinity}`);
+    if (typeof this.result?.interest === 'number') lines.push(`興味: ${this.result.interest}`);
+    if (typeof this.result?.irritation === 'number') lines.push(`イラつき: ${this.result.irritation}`);
 
-    this.add.text(w/2, h/2 + 5, lines.join('\n'), {
-      fontSize: '18px',
+    this.add.text(w/2, Math.floor(h*0.36), lines.join('\n') || '', {
+      fontFamily: 'sans-serif',
+      fontSize: '26px',
       color: '#ffffff',
-      lineSpacing: 10
-    }).setOrigin(0.5, 0).setAlpha(0.9).setScrollFactor(0);
+      align: 'center'
+    }).setOrigin(0.5).setDepth(1);
 
-    // 解放表示
-    const unlocked = this._readUnlockedFromSave(this.characterId);
-    const unlockLines = [];
-    if (unlocked?.cg1) unlockLines.push('CG①（アフター）');
-    if (unlocked?.cg2) unlockLines.push('CG②（親密）');
-
-    const unlockText = unlockLines.length
-      ? `Unlocked:\n${unlockLines.join('\n')}`
-      : 'Unlocked:\nなし';
-
-    this.add.text(w/2, h/2 + 160, unlockText, {
-      fontSize: '16px',
-      color: '#ffffff',
-      lineSpacing: 8
-    }).setOrigin(0.5, 0).setAlpha(0.85).setScrollFactor(0);
-
-    // ボタン
-    const mkBtn = (label, x, y, onClick) => {
-      const bg = this.add.rectangle(x, y, 250, 60, 0x000000, 0.68)
+    const mkBtn = (x, y, label, onClick)=>{
+      const bg = this.add.rectangle(x, y, 360, 74, 0x111111, 0.85)
         .setStrokeStyle(2, 0xffffff, 0.25)
-        .setScrollFactor(0)
+        .setDepth(2)
         .setInteractive({ useHandCursor: true });
 
-      const tx = this.add.text(x, y, label, {
-        fontSize: '18px',
+      const t = this.add.text(x, y, label, {
+        fontFamily: 'sans-serif',
+        fontSize: '26px',
         color: '#ffffff'
-      }).setOrigin(0.5).setScrollFactor(0);
+      }).setOrigin(0.5).setDepth(3);
 
-      bg.on('pointerdown', onClick);
-      return { bg, tx };
+      bg.on('pointerdown', ()=> onClick());
+      return { bg, t };
     };
 
-    const btnY = h/2 + panelH/2 - 64;
-    mkBtn('戻る',   w/2 - 150, btnY, () => this._goBack());
-    mkBtn('もう一回', w/2 + 150, btnY, () => this._retry());
+    mkBtn(w/2, Math.floor(h*0.62), 'もう一回', ()=> this._retry());
+    mkBtn(w/2, Math.floor(h*0.74), 'フィールドへ', ()=> this._goBack());
 
-    // ESCでも戻る
-    this.keyEsc = this.input.keyboard.addKey('ESC');
+    // returnTo は結果表示中は止めて見えなくする
+    this._hideReturnScene(this.returnTo);
 
-    // 念のため、表示をトップへ
-    this.scene.bringToTop('ClubResult');
+    // ESC で戻る
+    this._esc = this.input.keyboard?.addKey?.(Phaser.Input.Keyboard.KeyCodes.ESC);
   }
 
   update(){
-    if (this.keyEsc && Phaser.Input.Keyboard.JustDown(this.keyEsc)){
+    if (this._esc && Phaser.Input.Keyboard.JustDown(this._esc)){
       this._goBack();
     }
   }
 
   // =========================
-  // save
+  // actions
   // =========================
-  _applyResultToSave(result){
-    const s0 = loadSave();
-    const state = s0 || defaultSave();
-
-    if (!state.club) state.club = {};
-    if (!state.club.unlock) state.club.unlock = {};
-    if (!state.club.history) state.club.history = {};
-
-    const cid = result.characterId;
-
-    if (!state.club.unlock[cid]) state.club.unlock[cid] = { cg1:false, cg2:false };
-
-    if (!state.club.history[cid]){
-      state.club.history[cid] = {
-        playCount: 0,
-        aCount: 0,
-        bestRank: 'D',
-        bestScore: -999,
-        lastRank: 'D',
-        lastScore: -999,
-        lastNight: state.night ?? 1
-      };
-    }
-
-    const hist = state.club.history[cid];
-    hist.playCount = Number(hist.playCount || 0) + 1;
-    hist.lastRank = result.rank;
-    hist.lastScore = result.score;
-    hist.lastNight = state.night ?? 1;
-
-    if (result.rank === 'A'){
-      hist.aCount = Number(hist.aCount || 0) + 1;
-    }
-
-    if (result.score > Number(hist.bestScore ?? -999)){
-      hist.bestScore = result.score;
-    }
-
-    if (this._rankValue(result.rank) > this._rankValue(hist.bestRank)){
-      hist.bestRank = result.rank;
-    }
-
-    // CG①: Rank A かつ 危険域なし（60未満） かつ 強制終了じゃない
-    const canCg1 = (result.rank === 'A') && !result.forced && (result.irritation < 60);
-    if (canCg1){
-      state.club.unlock[cid].cg1 = true;
-    }
-
-    storeSave(state);
-  }
-
-  _readUnlockedFromSave(characterId){
-    const s = loadSave();
-    if (!s?.club?.unlock) return null;
-    return s.club.unlock[characterId] || null;
-  }
-
-  _rankValue(r){
-    if (r === 'A') return 3;
-    if (r === 'B') return 2;
-    if (r === 'C') return 1;
-    return 0;
-  }
-
-  // =========================
-  // nav
-  // =========================
-  _reviveReturnScene(key){
-    // ★ClubResultから戻る時は、残骸Clubを必ず止める（保険）
-    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
-      this.scene.stop('Club');
-    }
-
-    if (!this.scene.isActive(key)){
-      this.scene.start(key);
-      return;
-    }
-
-    if (this.scene.isSleeping(key)) this.scene.wake(key);
-    if (this.scene.isPaused(key)) this.scene.resume(key);
-    this.scene.bringToTop(key);
-  }
-
   _retry(){
-    // ★Clubの残骸を止めてから起動
-    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
-      this.scene.stop('Club');
-    }
-
-    // returnTo を止める（見た目の二重起動回避）
-    if (this.returnTo && this.scene.isActive(this.returnTo) && !this.scene.isPaused(this.returnTo)){
-      this.scene.pause(this.returnTo);
-    } else if (this.returnTo && this.scene.isSleeping(this.returnTo)){
-      this.scene.wake(this.returnTo);
-      this.scene.pause(this.returnTo);
-    }
-
-    this.scene.stop('ClubResult');
-    this.scene.launch('Club', {
-      returnTo: this.returnTo,
-      characterId: this.characterId
-    });
-    this.scene.bringToTop('Club');
-  }
-
-  _goBack(){
-    this._reviveReturnScene(this.returnTo);
-    this.scene.stop('ClubResult');
-  }
-
- 
-  _reviveReturnScene(key){
-    // ★ClubResultから戻る時は、残骸Clubを必ず止める（保険）
-    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
-      this.scene.stop('Club');
-    }
-
-    if (!this.scene.isActive(key)){
-      this.scene.start(key);
-      return;
-    }
-
-    if (this.scene.isSleeping(key)) this.scene.wake(key);
-    if (this.scene.isPaused(key)) this.scene.resume(key);
-    this.scene.bringToTop(key);
-  }
-
-  _retry(){
-    // 連打ガード（あれば）
     if (this._busy) return;
     this._busy = true;
-  
-    // ★Clubの残骸を止める
-    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
-      this.scene.stop('Club');
-    }
-  
-    // ★returnTo（Fieldなど）を「止める＋見えなくする」
+
+    this._stopIfExists('Club');
     this._hideReturnScene(this.returnTo);
-  
-    // 自分を閉じてから起動（順序大事）
+
     this.scene.stop('ClubResult');
-  
     this.scene.launch('Club', {
       returnTo: this.returnTo,
       characterId: this.characterId
     });
     this.scene.bringToTop('Club');
   }
-  
+
   _goBack(){
     if (this._busy) return;
     this._busy = true;
-  
-    // ★returnTo（Fieldなど）を「見える＋動かす」
+
+    this._stopIfExists('Club');
     this._reviveReturnScene(this.returnTo);
-  
-    // Clubが生きてたら止める（保険）
-    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
-      this.scene.stop('Club');
-    }
-  
     this.scene.stop('ClubResult');
   }
-  
+
   // =========================
   // helpers
   // =========================
-  
-  // returnTo を「pause + visible=false」にする
+  _stopIfExists(key){
+    if (!key) return;
+    try{
+      if (this.scene.isActive(key) || this.scene.isPaused(key) || this.scene.isSleeping(key)){
+        this.scene.stop(key);
+      }
+    }catch(_){ }
+  }
+
   _hideReturnScene(key){
     if (!key) return;
-  
-    // sceneが存在する時だけ
-    const s = this.scene.getScene(key);
-    if (!s) return;
-  
-    // visible を確実に落とす（これが最重要）
-    this.scene.setVisible(false, key);
-  
-    // 動いてたら止める
-    if (this.scene.isActive(key) && !this.scene.isPaused(key)){
-      this.scene.pause(key);
-    } else if (this.scene.isSleeping(key)){
-      // sleepingなら一回wakeしてからpause（保険）
-      this.scene.wake(key);
-      this.scene.pause(key);
-    }
+    try{
+      const s = this.scene.getScene(key);
+      if (!s) return;
+
+      this.scene.setVisible(false, key);
+
+      if (this.scene.isActive(key) && !this.scene.isPaused(key)){
+        this.scene.pause(key);
+      } else if (this.scene.isSleeping(key)){
+        this.scene.wake(key);
+        this.scene.pause(key);
+      }
+    }catch(_){ }
   }
-  
-  // returnTo を「visible=true + resume」にする
+
   _reviveReturnScene(key){
     if (!key) return;
-  
-    const s = this.scene.getScene(key);
-    if (!s) return;
-  
-    this.scene.setVisible(true, key);
-  
-    if (this.scene.isPaused(key)){
-      this.scene.resume(key);
-    } else if (this.scene.isSleeping(key)){
-      this.scene.wake(key);
-    }
+    try{
+      const s = this.scene.getScene(key);
+      if (!s) return;
+
+      this.scene.setVisible(true, key);
+
+      if (this.scene.isSleeping(key)) this.scene.wake(key);
+      if (this.scene.isPaused(key)) this.scene.resume(key);
+      this.scene.bringToTop(key);
+    }catch(_){ }
   }
-  
-  
 }
