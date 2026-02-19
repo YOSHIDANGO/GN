@@ -177,6 +177,14 @@ export class ClubScene extends Phaser.Scene {
     // 初回表示（stateless）
     this._renderTurn();
     this._showNpc('いらっしゃい。今日はどうする');
+
+    this.events.once('shutdown', () => {
+        this._cleanup();
+    });
+    this.events.once('destroy', () => {
+        this._cleanup();
+    });
+  
   }
 
   update(){

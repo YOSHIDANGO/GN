@@ -284,7 +284,9 @@ export class FieldScene extends Phaser.Scene {
 
     // Dialogueが閉じて Field が resume されたら、次のイベントへ
     this.events.on('resume', () => {
-      this.ev?.resume();
+        if (this.ev && this.ev.running) {
+            this.ev.resume();
+        }
 
       // ★会話後に解禁反映（入店イベント→出現）
       if (this.mode === 'inside'){

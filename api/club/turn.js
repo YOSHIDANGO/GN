@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     const affinity = toInt(body.affinity, 0);
     const interest = toInt(body.interest, 0);
     const irritation = toInt(body.irritation, 0);
-    const threshold = toInt(body.threshold, 70);
+    const threshold = toInt(body.threshold, 30);
   
     const nightSummary = String(body.nightSummary || '').trim();
   
@@ -145,7 +145,7 @@ export default async function handler(req, res) {
     // =========================
     // 閾値は「入力のthreshold」を尊重。なければ80相当
     const endLine = clamp(threshold, 0, 100);
-    const forceEnd = predictedIrr >= Math.max(80, endLine);
+    const forceEnd = predictedIrr >= endLine;
   
     // 文字数ガード（フロントでもやるけど保険）
     npcText = limitJP(npcText, 120);

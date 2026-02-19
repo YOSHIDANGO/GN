@@ -225,10 +225,13 @@ export class ClubResultScene extends Phaser.Scene {
 
   _goBack(){
     this._reviveReturnScene();
+    try { this.scene.bringToTop(this.returnTo); } catch(e){}
     this.scene.stop('ClubResult');
   }
 
   _retry(){
+    if (this.scene.isActive('Club')) this.scene.stop('Club');
+
     // 戻り先は pause して上に Club を重ねるのが安定
     const key = this.returnTo;
 
