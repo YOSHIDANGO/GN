@@ -74,8 +74,19 @@ export class ClubScene extends Phaser.Scene {
       color:'#ffffff'
     }).setShadow(2,2,'#000',2).setDepth(2000).setScrollFactor(0);
 
+    // ★PC入力の見える化（「入力できてない」切り分け用）
+    this.bufText = this.add.text(0, 0, '', {
+      fontSize:'16px',
+      color:'#ffffff',
+      backgroundColor:'rgba(0,0,0,0.35)',
+      padding:{ left:10, right:10, top:6, bottom:6 }
+    }).setShadow(2,2,'#000',2).setDepth(2002).setScrollFactor(0);
+
     // デバッグ
-    this.debug = { show: !!data?.debug, text: null };
+    this.debug = {
+      show: !!data?.debug,
+      text: null
+    };
     if (this.debug.show){
       this.debug.text = this.add.text(0, 0, '', {
         fontSize:'14px',
@@ -84,7 +95,7 @@ export class ClubScene extends Phaser.Scene {
     }
 
     // =========================
-    // PC input buffer（見た目は出さない）
+    // PC input buffer（見た目は出さない → bufTextで表示する）
     // =========================
     this.buf = '';
     this.maxChars = 60;
@@ -101,39 +112,12 @@ export class ClubScene extends Phaser.Scene {
     }
 
     // =========================
-    // interaction (PC)
+    // interaction
     // =========================
-    this.keyEsc = this.input.keyboard.addKey('ESC');
+    this.keyEsc = this.input.keyboard?.addKey('ESC');
 
-    this._onKeyDown = (ev) => {
-      if (this.ended) return;
-      if (this.isTouch) return;
-      if (this.pending) return;
-
-      const k = ev.key;
-
-      if (k === 'Enter'){
-        ev.preventDefault?.();
-        this._submit();
-        return;
-      }
-      if (k === 'Backspace'){
-        ev.preventDefault?.();
-        this.buf = this.buf.slice(0, -1);
-        return;
-      }
-      if (k === 'Escape'){
-        this._endAndReturn();
-        return;
-      }
-
-      if (k && k.length === 1){
-        if (this.buf.length >= this.maxChars) return;
-        this.buf += k;
-      }
-    };
-
-    this.input.keyboard.on('keydown', this._onKeyDown);
+    // ★重要：Phaser推奨の context 指定で on/off（2周目で死ぬのを防ぐ）
+    this._bindKeyboard();
 
     // =========================
     // resize/layout
@@ -147,6 +131,12 @@ export class ClubScene extends Phaser.Scene {
       this.turnText.setPosition(
         Math.max(14, Math.floor(w*0.02)),
         Math.max(10, Math.floor(h*0.02))
+      );
+
+      // buf表示はターン表示の下
+      this.bufText.setPosition(
+        Math.max(14, Math.floor(w*0.02)),
+        this.turnText.y + 28
       );
 
       const bottomY = this.ui.getPortraitBottomY(Math.max(8, Math.floor(h * 0.015)));
@@ -170,17 +160,78 @@ export class ClubScene extends Phaser.Scene {
     this._onResize = () => this.time.delayedCall(0, layout);
     this.scale.on('resize', this._onResize);
 
-    // 初回表示
+    // 初回表示（stateless）
     this._renderTurn();
     this._showNpc('いらっしゃい。今日はどうする');
 
-    this.events.once('shutdown', () => { this._cleanup(); });
-    this.events.once('destroy',  () => { this._cleanup(); });
+    // ★sleep/wakeでも再バインド（Vercel+Phaserでの再起動事故潰し）
+    this.events.on('sleep', () => {
+      this._unbindKeyboard();
+    });
+    this.events.on('wake', () => {
+      this._bindKeyboard();
+      if (!this.ended && !this.pending) this._setFixedBarEnabled(true);
+      this._renderTurn();
+    });
+
+    this.events.once('shutdown', () => this._cleanup());
+    this.events.once('destroy', () => this._cleanup());
   }
 
   update(){
-    if (Phaser.Input.Keyboard.JustDown(this.keyEsc)){
+    if (this.keyEsc && Phaser.Input.Keyboard.JustDown(this.keyEsc)){
       this._endAndReturn();
+    }
+  }
+
+  // =========================
+  // keyboard bind/unbind
+  // =========================
+  _bindKeyboard(){
+    if (!this.input.keyboard) return;
+
+    // 二重登録防止
+    this._unbindKeyboard();
+
+    this.input.keyboard.on('keydown', this._handleKeyDown, this);
+    this._keyboardBound = true;
+  }
+
+  _unbindKeyboard(){
+    if (!this.input.keyboard) return;
+    if (!this._keyboardBound) return;
+
+    this.input.keyboard.off('keydown', this._handleKeyDown, this);
+    this._keyboardBound = false;
+  }
+
+  _handleKeyDown(ev){
+    if (this.ended) return;
+    if (this.isTouch) return;
+    if (this.pending) return;
+
+    const k = ev.key;
+
+    if (k === 'Enter'){
+      ev.preventDefault?.();
+      this._submit();
+      return;
+    }
+    if (k === 'Backspace'){
+      ev.preventDefault?.();
+      this.buf = this.buf.slice(0, -1);
+      this._renderTurn();
+      return;
+    }
+    if (k === 'Escape'){
+      this._endAndReturn();
+      return;
+    }
+
+    if (k && k.length === 1){
+      if (this.buf.length >= this.maxChars) return;
+      this.buf += k;
+      this._renderTurn();
     }
   }
 
@@ -188,10 +239,6 @@ export class ClubScene extends Phaser.Scene {
   // fixed input bar helpers
   // =========================
   _createFixedInputBar(){
-    // ★念のため：同idが残ってたら消す（2回目事故対策）
-    const old = document.getElementById('club-fixed-bar');
-    if (old) old.remove();
-
     this._destroyFixedInputBar();
 
     const bar = document.createElement('div');
@@ -282,10 +329,6 @@ export class ClubScene extends Phaser.Scene {
       this._fixedBar = null;
       this._fixedInput = null;
       this._fixedSend = null;
-    } else {
-      // 参照がなくてもDOMが残ってたら消す（保険）
-      const old = document.getElementById('club-fixed-bar');
-      if (old) old.remove();
     }
   }
 
@@ -307,9 +350,18 @@ export class ClubScene extends Phaser.Scene {
     const t = `Turn ${this.turn}/10`;
     this.turnText.setText(t);
 
+    // ★PC入力表示
+    if (!this.isTouch){
+      const shown = (this.buf || '').slice(0, this.maxChars);
+      this.bufText.setText(`入力: ${shown}${shown.length ? '' : ''}`);
+      this.bufText.setVisible(true);
+    } else {
+      this.bufText.setVisible(false);
+    }
+
     if (this.debug.text){
       this.debug.text.setText(
-        `aff=${this.affinity} int=${this.interest} irr=${this.irritation} pending=${this.pending}`
+        `aff=${this.affinity} int=${this.interest} irr=${this.irritation}`
       );
     }
   }
@@ -334,8 +386,7 @@ export class ClubScene extends Phaser.Scene {
       this.interest >= 60 ? 'ノリ良め' :
       '様子見';
 
-    const extra = '';
-    const s = `${t}。${mood}。${extra}`.trim();
+    const s = `${t}。${mood}。`.trim();
     return s.length > 60 ? s.slice(0, 60) : s;
   }
 
@@ -347,6 +398,7 @@ export class ClubScene extends Phaser.Scene {
     if (!text) return;
 
     this.buf = '';
+    this._renderTurn();
     this._submitText(text);
   }
 
@@ -363,12 +415,14 @@ export class ClubScene extends Phaser.Scene {
       const payload = this._makeTurnPayload(text);
       const out = await this._callServer(payload);
 
+      // stateless：常にdeltaで更新（クライアントが正）
       const d = out?.delta || { affinity:0, interest:0, irritation:0 };
 
       this.affinity += Number(d.affinity || 0);
       this.interest += Number(d.interest || 0);
       this.irritation = Math.max(0, this.irritation + Number(d.irritation || 0));
 
+      // clamp
       this.affinity = Phaser.Math.Clamp(this.affinity, -50, 999);
       this.interest = Phaser.Math.Clamp(this.interest, -50, 999);
       this.irritation = Phaser.Math.Clamp(this.irritation, 0, 999);
@@ -376,8 +430,10 @@ export class ClubScene extends Phaser.Scene {
       this.turn += 1;
       this._renderTurn();
 
+      // 表示
       this._showNpc(out?.npcText || '……');
 
+      // 終了判定（基本はサーバ flags）
       const forceEnd = !!out?.flags?.forceEnd;
 
       if (forceEnd){
@@ -385,6 +441,7 @@ export class ClubScene extends Phaser.Scene {
         return;
       }
 
+      // 10ターン（表示上は turn/10）
       if (this.turn > 10){
         this._finishNight({ forced:false });
         return;
@@ -395,7 +452,6 @@ export class ClubScene extends Phaser.Scene {
       if (!this.ended){
         this._setFixedBarEnabled(true);
       }
-      this._renderTurn();
     }
   }
 
@@ -420,20 +476,12 @@ export class ClubScene extends Phaser.Scene {
     };
   }
 
-  // ★ここが修正の本丸：タイムアウト入れる
   async _callServer(payload){
-    const url = '/api/club/turn';
-    const TIMEOUT_MS = 6500;
-
-    const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-    const timer = ctrl ? setTimeout(() => ctrl.abort(), TIMEOUT_MS) : null;
-
     try {
-      const res = await fetch(url, {
+      const res = await fetch('/api/club/turn', {
         method: 'POST',
         headers: { 'Content-Type':'application/json' },
-        body: JSON.stringify(payload),
-        signal: ctrl?.signal
+        body: JSON.stringify(payload)
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -467,17 +515,12 @@ export class ClubScene extends Phaser.Scene {
       return json;
 
     } catch (e){
-      // タイムアウト/ネット死：必ず帰す（pending固定を防ぐ）
       return {
-        npcText: (e?.name === 'AbortError')
-          ? 'ちょい通信遅い。もう一回言って'
-          : 'ごめん、聞き取れなかった',
+        npcText: 'ごめん、聞き取れなかった',
         signals: { mood:'neutral', distance:0 },
         delta: { affinity:0, interest:0, irritation:0 },
         flags: { forceEnd:false }
       };
-    } finally {
-      if (timer) clearTimeout(timer);
     }
   }
 
@@ -488,6 +531,7 @@ export class ClubScene extends Phaser.Scene {
     this.ended = true;
     this._setFixedBarEnabled(false);
 
+    // 会話UIを薄くして被り軽減
     if (this.ui?.backdrop) this.ui.backdrop.setAlpha(0.35);
     if (this.ui?.nameText) this.ui.nameText.setAlpha(0.55);
     if (this.ui?.bodyText) this.ui.bodyText.setAlpha(0.55);
@@ -573,11 +617,8 @@ export class ClubScene extends Phaser.Scene {
       this.scale.off('resize', this._onResize);
       this._onResize = null;
     }
-    if (this._onKeyDown){
-      this.input.keyboard.off('keydown', this._onKeyDown);
-      this._onKeyDown = null;
-    }
 
+    this._unbindKeyboard();
     this._destroyFixedInputBar();
 
     if (this.endOverlay){ this.endOverlay.destroy(); this.endOverlay = null; }

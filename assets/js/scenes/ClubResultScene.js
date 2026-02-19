@@ -205,61 +205,91 @@ export class ClubResultScene extends Phaser.Scene {
   // =========================
   // nav
   // =========================
-  _reviveReturnScene(){
-    const key = this.returnTo;
+  _reviveReturnScene(key){
+    // ★ClubResultから戻る時は、残骸Clubを必ず止める（保険）
+    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
+      this.scene.stop('Club');
+    }
 
-    // どの状態でも戻せるように
-    if (this.scene.isPaused(key)) {
-      this.scene.resume(key);
-    } else if (this.scene.isSleeping(key)) {
-      this.scene.wake(key);
-    } else if (!this.scene.isActive(key)) {
-      // まさか止まってたら start
+    if (!this.scene.isActive(key)){
       this.scene.start(key);
       return;
     }
 
-    // 表示順が裏に潜るのを防ぐ
-    try { this.scene.bringToTop(key); } catch (e) {}
+    if (this.scene.isSleeping(key)) this.scene.wake(key);
+    if (this.scene.isPaused(key)) this.scene.resume(key);
+    this.scene.bringToTop(key);
   }
 
   _retry(){
-    // 念のため：生き残ってたら止める
-    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isVisible('Club')){
+    // ★Clubの残骸を止めてから起動
+    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
       this.scene.stop('Club');
     }
-  
-    // returnTo 側は一旦止めず、Club起動時に pause するかは運用次第
-    // ただ今の構成（FieldをpauseしてClubをlaunch）に合わせるなら pause 推奨
-    if (this.returnTo && this.scene.isActive(this.returnTo)){
+
+    // returnTo を止める（見た目の二重起動回避）
+    if (this.returnTo && this.scene.isActive(this.returnTo) && !this.scene.isPaused(this.returnTo)){
+      this.scene.pause(this.returnTo);
+    } else if (this.returnTo && this.scene.isSleeping(this.returnTo)){
+      this.scene.wake(this.returnTo);
       this.scene.pause(this.returnTo);
     }
-  
+
     this.scene.stop('ClubResult');
-  
     this.scene.launch('Club', {
-      returnTo: this.returnTo || 'Field',
-      characterId: this.characterId || 'rei',
-      debug: false
+      returnTo: this.returnTo,
+      characterId: this.characterId
     });
     this.scene.bringToTop('Club');
   }
-  
+
   _goBack(){
-    // 念のため：Clubを必ず止める
-    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isVisible('Club')){
+    this._reviveReturnScene(this.returnTo);
+    this.scene.stop('ClubResult');
+  }
+
+ 
+  _reviveReturnScene(key){
+    // ★ClubResultから戻る時は、残骸Clubを必ず止める（保険）
+    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
       this.scene.stop('Club');
     }
-  
-    this.scene.stop('ClubResult');
-  
-    // returnTo を確実に復帰
-    if (this.returnTo){
-      if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
-      else if (this.scene.isSleeping(this.returnTo)) this.scene.wake(this.returnTo);
-      else if (!this.scene.isActive(this.returnTo)) this.scene.start(this.returnTo);
-      this.scene.bringToTop(this.returnTo);
+
+    if (!this.scene.isActive(key)){
+      this.scene.start(key);
+      return;
     }
+
+    if (this.scene.isSleeping(key)) this.scene.wake(key);
+    if (this.scene.isPaused(key)) this.scene.resume(key);
+    this.scene.bringToTop(key);
+  }
+
+  _retry(){
+    // ★Clubの残骸を止めてから起動
+    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
+      this.scene.stop('Club');
+    }
+
+    // returnTo を止める（見た目の二重起動回避）
+    if (this.returnTo && this.scene.isActive(this.returnTo) && !this.scene.isPaused(this.returnTo)){
+      this.scene.pause(this.returnTo);
+    } else if (this.returnTo && this.scene.isSleeping(this.returnTo)){
+      this.scene.wake(this.returnTo);
+      this.scene.pause(this.returnTo);
+    }
+
+    this.scene.stop('ClubResult');
+    this.scene.launch('Club', {
+      returnTo: this.returnTo,
+      characterId: this.characterId
+    });
+    this.scene.bringToTop('Club');
+  }
+
+  _goBack(){
+    this._reviveReturnScene(this.returnTo);
+    this.scene.stop('ClubResult');
   }
   
 }
