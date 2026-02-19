@@ -12,13 +12,12 @@ export class ClubScene extends Phaser.Scene {
     this.characterId = data?.characterId || 'rei';
     this.boyKey = data?.boyKey || 'boy_normal';
 
-    this.input.setTopOnly(true);
-
-    // スマホ判定（ざっくり）
-    this.isTouch = !this.sys.game.device.os.desktop;
-
     // 送信中ガード
     this.pending = false;
+    this.ended = false;
+
+    this.lastPlayerText = '';
+    this.lastNpcText = '';
 
     // =========================
     // character def（表示だけに使う）
@@ -41,10 +40,6 @@ export class ClubScene extends Phaser.Scene {
     this.affinity = 0;
     this.interest = 0;
     this.irritation = 0;
-
-    this.ended = false;
-    this.lastPlayerText = '';
-    this.lastNpcText = '';
 
     // =========================
     // visuals
@@ -74,19 +69,8 @@ export class ClubScene extends Phaser.Scene {
       color:'#ffffff'
     }).setShadow(2,2,'#000',2).setDepth(2000).setScrollFactor(0);
 
-    // ★PC入力の見える化（「入力できてない」切り分け用）
-    this.bufText = this.add.text(0, 0, '', {
-      fontSize:'16px',
-      color:'#ffffff',
-      backgroundColor:'rgba(0,0,0,0.35)',
-      padding:{ left:10, right:10, top:6, bottom:6 }
-    }).setShadow(2,2,'#000',2).setDepth(2002).setScrollFactor(0);
-
     // デバッグ
-    this.debug = {
-      show: !!data?.debug,
-      text: null
-    };
+    this.debug = { show: !!data?.debug, text: null };
     if (this.debug.show){
       this.debug.text = this.add.text(0, 0, '', {
         fontSize:'14px',
@@ -95,29 +79,18 @@ export class ClubScene extends Phaser.Scene {
     }
 
     // =========================
-    // PC input buffer（見た目は出さない → bufTextで表示する）
-    // =========================
-    this.buf = '';
-    this.maxChars = 60;
-
-    // =========================
-    // fixed input bar (スマホ用 / DOMはPhaser外)
+    // DOM fixed input bar（PC/スマホ共通）
     // =========================
     this._fixedBar = null;
     this._fixedInput = null;
     this._fixedSend = null;
+    this._fixedHandlers = null;
+    this._imeComposing = false;
 
-    if (this.isTouch){
-      this._createFixedInputBar();
-    }
+    // もし前回の残骸があれば消す（保険）
+    try { document.getElementById('club-fixed-bar')?.remove(); } catch(_){}
 
-    // =========================
-    // interaction
-    // =========================
-    this.keyEsc = this.input.keyboard?.addKey('ESC');
-
-    // ★重要：Phaser推奨の context 指定で on/off（2周目で死ぬのを防ぐ）
-    this._bindKeyboard();
+    this._createFixedInputBar();
 
     // =========================
     // resize/layout
@@ -131,12 +104,6 @@ export class ClubScene extends Phaser.Scene {
       this.turnText.setPosition(
         Math.max(14, Math.floor(w*0.02)),
         Math.max(10, Math.floor(h*0.02))
-      );
-
-      // buf表示はターン表示の下
-      this.bufText.setPosition(
-        Math.max(14, Math.floor(w*0.02)),
-        this.turnText.y + 28
       );
 
       const bottomY = this.ui.getPortraitBottomY(Math.max(8, Math.floor(h * 0.015)));
@@ -164,90 +131,26 @@ export class ClubScene extends Phaser.Scene {
     this._renderTurn();
     this._showNpc('いらっしゃい。今日はどうする');
 
-    // ★sleep/wakeでも再バインド（Vercel+Phaserでの再起動事故潰し）
-    this.events.on('sleep', () => {
-      this._unbindKeyboard();
-    });
-    this.events.on('wake', () => {
-      this._bindKeyboard();
-      if (!this.ended && !this.pending) this._setFixedBarEnabled(true);
-      this._renderTurn();
-    });
+    // =========================
+    // lifecycle cleanup（ここ重要）
+    // =========================
+    const hardCleanup = () => this._cleanup();
 
-    this.events.once('shutdown', () => this._cleanup());
-    this.events.once('destroy', () => this._cleanup());
-
-    this.events.once('sleep', () => {
-        this._cleanup();
-    });
-  }
-
-  update(){
-    if (this.keyEsc && Phaser.Input.Keyboard.JustDown(this.keyEsc)){
-      this._endAndReturn();
-    }
+    this.events.on('shutdown', hardCleanup);
+    this.events.on('destroy', hardCleanup);
+    this.events.on('sleep', hardCleanup);
+    this.events.on('pause', hardCleanup);
   }
 
   // =========================
-  // keyboard bind/unbind
+  // fixed input bar helpers
   // =========================
-  _bindKeyboard(){
-    if (!this.input.keyboard) return;
-
-    // 二重登録防止
-    this._unbindKeyboard();
-
-    this.input.keyboard.on('keydown', this._handleKeyDown, this);
-    this._keyboardBound = true;
-  }
-
-  _unbindKeyboard(){
-    if (!this.input.keyboard) return;
-    if (!this._keyboardBound) return;
-
-    this.input.keyboard.off('keydown', this._handleKeyDown, this);
-    this._keyboardBound = false;
-  }
-
-  _handleKeyDown(ev){
-    if (this.ended) return;
-    if (this.isTouch) return;
-    if (this.pending) return;
-
-    const k = ev.key;
-
-    if (k === 'Enter'){
-      ev.preventDefault?.();
-      this._submit();
-      return;
-    }
-    if (k === 'Backspace'){
-      ev.preventDefault?.();
-      this.buf = this.buf.slice(0, -1);
-      this._renderTurn();
-      return;
-    }
-    if (k === 'Escape'){
-      this._endAndReturn();
-      return;
-    }
-
-    if (k && k.length === 1){
-      if (this.buf.length >= this.maxChars) return;
-      this.buf += k;
-      this._renderTurn();
-    }
-  }
-
-    // =========================
-    // fixed input bar helpers
-    // =========================
-    _createFixedInputBar(){
+  _createFixedInputBar(){
     this._destroyFixedInputBar();
-  
+
     const bar = document.createElement('div');
     bar.id = 'club-fixed-bar';
-  
+
     bar.style.position = 'fixed';
     bar.style.left = '0';
     bar.style.right = '0';
@@ -258,7 +161,8 @@ export class ClubScene extends Phaser.Scene {
     bar.style.backdropFilter = 'blur(6px)';
     bar.style.webkitBackdropFilter = 'blur(6px)';
     bar.style.boxSizing = 'border-box';
-  
+    bar.style.pointerEvents = 'auto';
+
     bar.innerHTML = `
       <div style="
         display:flex;
@@ -267,7 +171,8 @@ export class ClubScene extends Phaser.Scene {
         width:100%;
         box-sizing:border-box;
       ">
-        <input id="club-fixed-input" type="text" placeholder="ここに入力"
+        <input id="club-fixed-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+          placeholder="ここに入力"
           style="
             flex:1;
             min-width:0;
@@ -282,7 +187,7 @@ export class ClubScene extends Phaser.Scene {
             box-sizing:border-box;
           "
         />
-        <button id="club-fixed-send"
+        <button id="club-fixed-send" type="button"
           style="
             width:110px;
             height:48px;
@@ -296,119 +201,118 @@ export class ClubScene extends Phaser.Scene {
         >送信</button>
       </div>
     `;
-  
+
     document.body.appendChild(bar);
-  
+
     const input = bar.querySelector('#club-fixed-input');
-    const btn   = bar.querySelector('#club-fixed-send');
-  
+    const btn = bar.querySelector('#club-fixed-send');
+
     if (!input || !btn){
-      bar.remove();
+      try { bar.remove(); } catch(_){}
       return;
     }
-  
+
     const doSend = () => {
       if (this.ended) return;
       if (this.pending) return;
-  
+
       const v = (input.value || '').trim();
       if (!v) return;
-  
+
       input.value = '';
       this._submitText(v);
+
+      // スマホは送信後にキーボード閉じたくないなら blur消してOK
+      // いったん閉じる運用ならこれ
       input.blur();
     };
-  
-    // クリック
-    const onClick = (e) => {
-      e.stopPropagation();
-      doSend();
+
+    // DOM上の操作がPhaser側に伝播してタップ移動になるのを止める
+    const stopOnly = (e) => {
+      e?.stopPropagation?.();
     };
-  
-    // Enter
-    const onKey = (e) => {
-      if (e.key === 'Enter'){
-        e.stopPropagation();
+
+    const onBtnClick = (e) => { stopOnly(e); doSend(); };
+
+    // iOS/Androidでclickが不安定な時の保険（pointerup）
+    const onBtnPointerUp = (e) => { stopOnly(e); doSend(); };
+
+    // IME中のEnter誤爆を防ぐ（PCの日本語もこれで安定）
+    const onCompositionStart = (e) => { stopOnly(e); this._imeComposing = true; };
+    const onCompositionEnd = (e) => { stopOnly(e); this._imeComposing = false; };
+
+    const onInputKeyDown = (e) => {
+      stopOnly(e);
+      if (e.key === 'Enter' && !e.isComposing && !this._imeComposing){
+        e.preventDefault();
         doSend();
       }
     };
-  
-    // Phaserにイベントを流さない（preventDefaultしない）
-    const stopOnly = (e) => {
-      e.stopPropagation();
+
+    // “preventDefaultしない”のがポイント（キーボード出なくなるから）
+    // でもPhaserに流れないように止める
+    bar.addEventListener('pointerdown', stopOnly, true);
+    bar.addEventListener('pointerup', stopOnly, true);
+    input.addEventListener('pointerdown', stopOnly, true);
+    btn.addEventListener('pointerdown', stopOnly, true);
+
+    btn.addEventListener('click', onBtnClick);
+    btn.addEventListener('pointerup', onBtnPointerUp);
+
+    input.addEventListener('keydown', onInputKeyDown);
+    input.addEventListener('compositionstart', onCompositionStart);
+    input.addEventListener('compositionend', onCompositionEnd);
+
+    this._fixedHandlers = {
+      stopOnly,
+      onBtnClick,
+      onBtnPointerUp,
+      onInputKeyDown,
+      onCompositionStart,
+      onCompositionEnd
     };
-  
-    btn.addEventListener('click', onClick);
-    input.addEventListener('keydown', onKey);
-  
-    // タッチは伝播だけ止める（フォーカス殺さない）
-    bar.addEventListener('pointerdown', stopOnly);
-    bar.addEventListener('touchstart', stopOnly, { passive:true });
-  
-    this._fixedHandlers = { onClick, onKey, stopOnly };
-  
+
     this._fixedBar = bar;
     this._fixedInput = input;
     this._fixedSend = btn;
   }
-  
+
   _destroyFixedInputBar(){
-    if (this._fixedBar){
-      const bar = this._fixedBar;
-      const input = this._fixedInput;
-      const btn = this._fixedSend;
-      const h = this._fixedHandlers;
-  
-      try{
-        if (h && btn) btn.removeEventListener('click', h.onClick);
-        if (h && input) input.removeEventListener('keydown', h.onKey);
-        if (h && bar){
-          bar.removeEventListener('pointerdown', h.stopOnly);
-          bar.removeEventListener('touchstart', h.stopOnly);
-        }
-      }catch(_){}
-  
-      bar.remove();
-    }
-  
+    const bar = this._fixedBar;
+    const input = this._fixedInput;
+    const btn = this._fixedSend;
+    const h = this._fixedHandlers;
+
+    if (!bar) return;
+
+    try{
+      if (h){
+        bar.removeEventListener('pointerdown', h.stopOnly, true);
+        bar.removeEventListener('pointerup', h.stopOnly, true);
+      }
+      if (h && input){
+        input.removeEventListener('pointerdown', h.stopOnly, true);
+        input.removeEventListener('keydown', h.onInputKeyDown);
+        input.removeEventListener('compositionstart', h.onCompositionStart);
+        input.removeEventListener('compositionend', h.onCompositionEnd);
+      }
+      if (h && btn){
+        btn.removeEventListener('pointerdown', h.stopOnly, true);
+        btn.removeEventListener('click', h.onBtnClick);
+        btn.removeEventListener('pointerup', h.onBtnPointerUp);
+      }
+    }catch(_){}
+
+    try{ bar.remove(); }catch(_){}
+
     this._fixedBar = null;
     this._fixedInput = null;
     this._fixedSend = null;
     this._fixedHandlers = null;
+    this._imeComposing = false;
   }
-  
-  
-  _destroyFixedInputBar(){
-    if (this._fixedBar){
-      const bar = this._fixedBar;
-      const input = this._fixedInput;
-      const btn = this._fixedSend;
-      const h = this._fixedHandlers;
-  
-      try{
-        if (h && btn){
-          btn.removeEventListener('click', h.onBtnClick);
-          btn.removeEventListener('pointerdown', h.onBtnPointerDown);
-        }
-        if (h && input) input.removeEventListener('keydown', h.onInputKeyDown);
-        if (h && bar){
-          bar.removeEventListener('touchstart', h.onTouch);
-          bar.removeEventListener('touchmove', h.onTouch);
-        }
-      }catch(_){}
-  
-      bar.remove();
-    }
-  
-    this._fixedBar = null;
-    this._fixedInput = null;
-    this._fixedSend = null;
-    this._fixedHandlers = null;
-  }
-  
 
   _setFixedBarEnabled(enabled){
-    if (!this.isTouch) return;
     if (!this._fixedInput || !this._fixedSend) return;
 
     this._fixedInput.disabled = !enabled;
@@ -425,19 +329,8 @@ export class ClubScene extends Phaser.Scene {
     const t = `Turn ${this.turn}/10`;
     this.turnText.setText(t);
 
-    // ★PC入力表示
-    if (!this.isTouch){
-      const shown = (this.buf || '').slice(0, this.maxChars);
-      this.bufText.setText(`入力: ${shown}${shown.length ? '' : ''}`);
-      this.bufText.setVisible(true);
-    } else {
-      this.bufText.setVisible(false);
-    }
-
     if (this.debug.text){
-      this.debug.text.setText(
-        `aff=${this.affinity} int=${this.interest} irr=${this.irritation}`
-      );
+      this.debug.text.setText(`aff=${this.affinity} int=${this.interest} irr=${this.irritation}`);
     }
   }
 
@@ -468,15 +361,6 @@ export class ClubScene extends Phaser.Scene {
   // =========================
   // turn flow
   // =========================
-  _submit(){
-    const text = (this.buf || '').trim();
-    if (!text) return;
-
-    this.buf = '';
-    this._renderTurn();
-    this._submitText(text);
-  }
-
   async _submitText(text){
     if (this.ended) return;
     if (this.pending) return;
@@ -484,20 +368,18 @@ export class ClubScene extends Phaser.Scene {
     this.pending = true;
     this._setFixedBarEnabled(false);
 
-    try {
+    try{
       this.lastPlayerText = text;
 
       const payload = this._makeTurnPayload(text);
       const out = await this._callServer(payload);
 
-      // stateless：常にdeltaで更新（クライアントが正）
       const d = out?.delta || { affinity:0, interest:0, irritation:0 };
 
       this.affinity += Number(d.affinity || 0);
       this.interest += Number(d.interest || 0);
       this.irritation = Math.max(0, this.irritation + Number(d.irritation || 0));
 
-      // clamp
       this.affinity = Phaser.Math.Clamp(this.affinity, -50, 999);
       this.interest = Phaser.Math.Clamp(this.interest, -50, 999);
       this.irritation = Phaser.Math.Clamp(this.irritation, 0, 999);
@@ -505,18 +387,14 @@ export class ClubScene extends Phaser.Scene {
       this.turn += 1;
       this._renderTurn();
 
-      // 表示
       this._showNpc(out?.npcText || '……');
 
-      // 終了判定（基本はサーバ flags）
       const forceEnd = !!out?.flags?.forceEnd;
-
       if (forceEnd){
         this._finishNight({ forced:true });
         return;
       }
 
-      // 10ターン（表示上は turn/10）
       if (this.turn > 10){
         this._finishNight({ forced:false });
         return;
@@ -524,9 +402,7 @@ export class ClubScene extends Phaser.Scene {
 
     } finally {
       this.pending = false;
-      if (!this.ended){
-        this._setFixedBarEnabled(true);
-      }
+      if (!this.ended) this._setFixedBarEnabled(true);
     }
   }
 
@@ -552,13 +428,12 @@ export class ClubScene extends Phaser.Scene {
   }
 
   async _callServer(payload){
-    try {
+    try{
       const res = await fetch('/api/club/turn', {
         method: 'POST',
         headers: { 'Content-Type':'application/json' },
         body: JSON.stringify(payload)
       });
-
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       let json = await res.json();
@@ -606,7 +481,6 @@ export class ClubScene extends Phaser.Scene {
     this.ended = true;
     this._setFixedBarEnabled(false);
 
-    // 会話UIを薄くして被り軽減
     if (this.ui?.backdrop) this.ui.backdrop.setAlpha(0.35);
     if (this.ui?.nameText) this.ui.nameText.setAlpha(0.55);
     if (this.ui?.bodyText) this.ui.bodyText.setAlpha(0.55);
@@ -681,19 +555,13 @@ export class ClubScene extends Phaser.Scene {
     });
   }
 
-  _endAndReturn(){
-    this._cleanup();
-    this.scene.stop('Club');
-    this.scene.resume(this.returnTo);
-  }
-
   _cleanup(){
     if (this._onResize){
       this.scale.off('resize', this._onResize);
       this._onResize = null;
     }
 
-    this._unbindKeyboard();
+    // DOMは必ず殺す
     this._destroyFixedInputBar();
 
     if (this.endOverlay){ this.endOverlay.destroy(); this.endOverlay = null; }
