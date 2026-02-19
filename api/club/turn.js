@@ -48,7 +48,7 @@ export default async function handler(req, res) {
       /なに|何|どう|どこ|いつ|誰|なんで|なぜ|\?|？/.test(t);
   
     const isRude =
-      /つまら|うるさ|だまれ|ブス|きも|金|いくら|ヤれ|抱|エロ/.test(t);
+      /つまら|うるさ|だまれ|ブス|きも|金|いくら|ヤれ|抱|死|エロ/.test(t);
   
     const isApology =
       /ごめん|すま|悪かっ|失礼/.test(t);
