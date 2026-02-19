@@ -31,7 +31,6 @@ export class ClubScene extends Phaser.Scene {
       name: def.name || 'レイ',
       portraitKey: def.portraitKey || 'rei_normal',
       bgKey: def.bgKey || 'bg_shop_inside',
-
       irritation_threshold: Number(def.irritation_threshold ?? 70)
     };
 
@@ -76,10 +75,7 @@ export class ClubScene extends Phaser.Scene {
     }).setShadow(2,2,'#000',2).setDepth(2000).setScrollFactor(0);
 
     // デバッグ
-    this.debug = {
-      show: !!data?.debug,
-      text: null
-    };
+    this.debug = { show: !!data?.debug, text: null };
     if (this.debug.show){
       this.debug.text = this.add.text(0, 0, '', {
         fontSize:'14px',
@@ -174,17 +170,12 @@ export class ClubScene extends Phaser.Scene {
     this._onResize = () => this.time.delayedCall(0, layout);
     this.scale.on('resize', this._onResize);
 
-    // 初回表示（stateless）
+    // 初回表示
     this._renderTurn();
     this._showNpc('いらっしゃい。今日はどうする');
 
-    this.events.once('shutdown', () => {
-        this._cleanup();
-    });
-    this.events.once('destroy', () => {
-        this._cleanup();
-    });
-  
+    this.events.once('shutdown', () => { this._cleanup(); });
+    this.events.once('destroy',  () => { this._cleanup(); });
   }
 
   update(){
@@ -197,8 +188,7 @@ export class ClubScene extends Phaser.Scene {
   // fixed input bar helpers
   // =========================
   _createFixedInputBar(){
-
-    // 参照がない取り残しDOMも消す（2回目送れない対策の本命）
+    // ★念のため：同idが残ってたら消す（2回目事故対策）
     const old = document.getElementById('club-fixed-bar');
     if (old) old.remove();
 
@@ -292,6 +282,10 @@ export class ClubScene extends Phaser.Scene {
       this._fixedBar = null;
       this._fixedInput = null;
       this._fixedSend = null;
+    } else {
+      // 参照がなくてもDOMが残ってたら消す（保険）
+      const old = document.getElementById('club-fixed-bar');
+      if (old) old.remove();
     }
   }
 
@@ -315,7 +309,7 @@ export class ClubScene extends Phaser.Scene {
 
     if (this.debug.text){
       this.debug.text.setText(
-        `aff=${this.affinity} int=${this.interest} irr=${this.irritation}`
+        `aff=${this.affinity} int=${this.interest} irr=${this.irritation} pending=${this.pending}`
       );
     }
   }
@@ -340,9 +334,7 @@ export class ClubScene extends Phaser.Scene {
       this.interest >= 60 ? 'ノリ良め' :
       '様子見';
 
-    // 必要なら topic とかここに足す（固定で短く）
     const extra = '';
-
     const s = `${t}。${mood}。${extra}`.trim();
     return s.length > 60 ? s.slice(0, 60) : s;
   }
@@ -371,14 +363,12 @@ export class ClubScene extends Phaser.Scene {
       const payload = this._makeTurnPayload(text);
       const out = await this._callServer(payload);
 
-      // stateless：常にdeltaで更新（クライアントが正）
       const d = out?.delta || { affinity:0, interest:0, irritation:0 };
 
       this.affinity += Number(d.affinity || 0);
       this.interest += Number(d.interest || 0);
       this.irritation = Math.max(0, this.irritation + Number(d.irritation || 0));
 
-      // clamp
       this.affinity = Phaser.Math.Clamp(this.affinity, -50, 999);
       this.interest = Phaser.Math.Clamp(this.interest, -50, 999);
       this.irritation = Phaser.Math.Clamp(this.irritation, 0, 999);
@@ -386,10 +376,8 @@ export class ClubScene extends Phaser.Scene {
       this.turn += 1;
       this._renderTurn();
 
-      // 表示
       this._showNpc(out?.npcText || '……');
 
-      // 終了判定（基本はサーバ flags）
       const forceEnd = !!out?.flags?.forceEnd;
 
       if (forceEnd){
@@ -397,7 +385,6 @@ export class ClubScene extends Phaser.Scene {
         return;
       }
 
-      // 10ターン（表示上は turn/10）
       if (this.turn > 10){
         this._finishNight({ forced:false });
         return;
@@ -408,6 +395,7 @@ export class ClubScene extends Phaser.Scene {
       if (!this.ended){
         this._setFixedBarEnabled(true);
       }
+      this._renderTurn();
     }
   }
 
@@ -432,20 +420,24 @@ export class ClubScene extends Phaser.Scene {
     };
   }
 
+  // ★ここが修正の本丸：タイムアウト入れる
   async _callServer(payload){
-    const ac = new AbortController();
-    const timer = setTimeout(() => ac.abort(), 7000); // 7秒で中断
-  
+    const url = '/api/club/turn';
+    const TIMEOUT_MS = 6500;
+
+    const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), TIMEOUT_MS) : null;
+
     try {
-      const res = await fetch('/api/club/turn', {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type':'application/json' },
         body: JSON.stringify(payload),
-        signal: ac.signal
+        signal: ctrl?.signal
       });
-  
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  
+
       let json = await res.json();
       if (!json || typeof json !== 'object') json = {};
 
@@ -475,13 +467,17 @@ export class ClubScene extends Phaser.Scene {
       return json;
 
     } catch (e){
-      // サーバ死んだ時：最低限の形
+      // タイムアウト/ネット死：必ず帰す（pending固定を防ぐ）
       return {
-        npcText: 'ごめん、聞き取れなかった',
+        npcText: (e?.name === 'AbortError')
+          ? 'ちょい通信遅い。もう一回言って'
+          : 'ごめん、聞き取れなかった',
         signals: { mood:'neutral', distance:0 },
         delta: { affinity:0, interest:0, irritation:0 },
         flags: { forceEnd:false }
       };
+    } finally {
+      if (timer) clearTimeout(timer);
     }
   }
 
@@ -492,7 +488,6 @@ export class ClubScene extends Phaser.Scene {
     this.ended = true;
     this._setFixedBarEnabled(false);
 
-    // 会話UIを薄くして被り軽減
     if (this.ui?.backdrop) this.ui.backdrop.setAlpha(0.35);
     if (this.ui?.nameText) this.ui.nameText.setAlpha(0.55);
     if (this.ui?.bodyText) this.ui.bodyText.setAlpha(0.55);
@@ -553,7 +548,7 @@ export class ClubScene extends Phaser.Scene {
       this.endOverlay.on('pointerdown', () => {
         this._cleanup();
 
-        // ★順番大事：先に Result を起動してから Club を止める
+        this.scene.stop('Club');
         this.scene.launch('ClubResult', {
           returnTo: this.returnTo,
           characterId: this.characterId,
@@ -563,22 +558,14 @@ export class ClubScene extends Phaser.Scene {
           threshold: this.char.irritation_threshold,
           forced: !!forced
         });
-        this.scene.bringToTop('ClubResult');
-
-        // ★Club を確実に stop（残留潰し）
-        this.scene.stop('Club');
       });
     });
   }
 
   _endAndReturn(){
     this._cleanup();
-
-    // ★resume してから stop（Club 残留潰し）
-    if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
-    this.scene.bringToTop(this.returnTo);
-
     this.scene.stop('Club');
+    this.scene.resume(this.returnTo);
   }
 
   _cleanup(){
@@ -592,10 +579,6 @@ export class ClubScene extends Phaser.Scene {
     }
 
     this._destroyFixedInputBar();
-
-    // 念のためDOM直指定でも消す
-    const old = document.getElementById('club-fixed-bar');
-    if (old) old.remove();
 
     if (this.endOverlay){ this.endOverlay.destroy(); this.endOverlay = null; }
     if (this.endBoy){ this.endBoy.destroy(); this.endBoy = null; }
