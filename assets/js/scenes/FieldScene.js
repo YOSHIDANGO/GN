@@ -273,8 +273,18 @@ export class FieldScene extends Phaser.Scene {
 
     // Dialogueが閉じて Field が resume されたら、次のイベントへ
     this.events.on('resume', () => {
-      const reason = this._resumeReason || '';
-      this._resumeReason = '';
+
+        // ★ここ：reason判定より前に “強制掃除”
+        for (const key of ['Club', 'ClubResult']){
+            if (this.scene.isActive(key) || this.scene.isPaused(key) || this.scene.isVisible(key)){
+            this.scene.stop(key);
+            }
+        }
+        if (this.scene.isPaused('Field')) this.scene.resume('Field');
+        this.scene.bringToTop('Field');
+
+        const reason = this._resumeReason || '';
+        this._resumeReason = '';
 
       // ★Dialogueから戻った時だけ、会話後処理を走らせる
       if (reason !== 'dialogue') return;
