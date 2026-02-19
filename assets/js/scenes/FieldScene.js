@@ -272,58 +272,51 @@ export class FieldScene extends Phaser.Scene {
     this.ev = new EventQueue(this);
 
     // Dialogueが閉じて Field が resume されたら、次のイベントへ
+    this._resumeReason = '';
+
     this.events.on('resume', () => {
 
-        // ★ここ：reason判定より前に “強制掃除”
-        for (const key of ['Club', 'ClubResult']){
-            if (this.scene.isActive(key) || this.scene.isPaused(key) || this.scene.isVisible(key)){
-            this.scene.stop(key);
-            }
-        }
-        if (this.scene.isPaused('Field')) this.scene.resume('Field');
-        this.scene.bringToTop('Field');
+    const reason = this._resumeReason || '';
+    this._resumeReason = '';
 
-        const reason = this._resumeReason || '';
-        this._resumeReason = '';
+    // ★Dialogueから戻った時だけ、会話後処理を走らせる
+    if (reason !== 'dialogue') return;
 
-      // ★Dialogueから戻った時だけ、会話後処理を走らせる
-      if (reason !== 'dialogue') return;
-
-      if (this.ev && this.ev.running) {
+    if (this.ev && this.ev.running) {
         this.ev.resume();
-      }
+    }
 
-      // ★会話後に解禁反映（入店イベント→出現）
-      if (this.mode === 'inside'){
+    // ★会話後に解禁反映（入店イベント→出現）
+    if (this.mode === 'inside'){
         const p = this.state?.progress;
         const id = p?.pendingUnlockEnemyId;
         if (id){
-          p.cabajoUnlocked[id] = true;
-          p.pendingUnlockEnemyId = null;
-          storeSave(this.state);
+        p.cabajoUnlocked[id] = true;
+        p.pendingUnlockEnemyId = null;
+        storeSave(this.state);
 
-          this._spawnNPCs('inside'); // 出現更新
-          this._startNpcWander();
+        this._spawnNPCs('inside'); // 出現更新
+        this._startNpcWander();
         }
-      }
+    }
 
-      // ★会話後アクション
-      if (this.postDialogueAction){
+    // ★会話後アクション
+    if (this.postDialogueAction){
         const act = this.postDialogueAction;
         this.postDialogueAction = null;
 
         if (act.type === 'boy'){
-          this._openBoyMenu(act.npc);
-          return;
+        this._openBoyMenu(act.npc);
+        return;
         }
         if (act.type === 'rematch'){
-          this._openRematchMenu(act.enemyId);
-          return;
+        this._openRematchMenu(act.enemyId);
+        return;
         }
-      }
+    }
 
-      // ★エンディング判定（カレン後）
-      if (this.state?.flags?.endingPending){
+    // ★エンディング判定（カレン後）
+    if (this.state?.flags?.endingPending){
         this.state.flags.endingPending = false;
         storeSave(this.state);
 
@@ -332,8 +325,9 @@ export class FieldScene extends Phaser.Scene {
         this.scene.launch('Ending', { returnTo: 'Title' });
         this.scene.bringToTop('Ending');
         return;
-      }
+    }
     });
+
 
     // shutdown cleanup
     this.events.once('shutdown', ()=>{
@@ -690,9 +684,9 @@ export class FieldScene extends Phaser.Scene {
   }
 
   _launchDialogue(scriptKey, bgKey){
-    // ★resume理由をセット
+    // ★resumeがDialogue由来だと分かるように印を付ける
     this._resumeReason = 'dialogue';
-
+  
     this.scene.pause();
     this.scene.launch('Dialogue', {
       scriptKey,
@@ -701,6 +695,7 @@ export class FieldScene extends Phaser.Scene {
     });
     this.scene.bringToTop('Dialogue');
   }
+  
 
   _applyLastBattleResultQueued(){
     if (!this.state) this.state = loadSave();
