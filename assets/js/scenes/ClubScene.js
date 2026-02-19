@@ -239,10 +239,10 @@ export class ClubScene extends Phaser.Scene {
     }
   }
 
-  // =========================
-  // fixed input bar helpers
-  // =========================
-  _createFixedInputBar(){
+    // =========================
+    // fixed input bar helpers
+    // =========================
+    _createFixedInputBar(){
     this._destroyFixedInputBar();
   
     const bar = document.createElement('div');
@@ -300,9 +300,8 @@ export class ClubScene extends Phaser.Scene {
     document.body.appendChild(bar);
   
     const input = bar.querySelector('#club-fixed-input');
-    const btn = bar.querySelector('#club-fixed-send');
+    const btn   = bar.querySelector('#club-fixed-send');
   
-    // 保険：取れなかったら消して終わり
     if (!input || !btn){
       bar.remove();
       return;
@@ -320,47 +319,64 @@ export class ClubScene extends Phaser.Scene {
       input.blur();
     };
   
-    const onBtnClick = (e) => {
-      e?.preventDefault?.();
-      e?.stopPropagation?.();
+    // クリック
+    const onClick = (e) => {
+      e.stopPropagation();
       doSend();
     };
   
-    // スマホ安定用：click以外も拾う
-    const onBtnPointerDown = (e) => {
-      e?.preventDefault?.();
-      e?.stopPropagation?.();
-      doSend();
-    };
-  
-    const onInputKeyDown = (e) => {
+    // Enter
+    const onKey = (e) => {
       if (e.key === 'Enter'){
-        e.preventDefault();
         e.stopPropagation();
         doSend();
       }
     };
   
-    // タッチの伝播を止める（Phaser側のpointerdownに流さない）
-    const onTouch = (e) => {
-      e.preventDefault();
+    // Phaserにイベントを流さない（preventDefaultしない）
+    const stopOnly = (e) => {
       e.stopPropagation();
     };
   
-    btn.addEventListener('click', onBtnClick);
-    btn.addEventListener('pointerdown', onBtnPointerDown);
+    btn.addEventListener('click', onClick);
+    input.addEventListener('keydown', onKey);
   
-    input.addEventListener('keydown', onInputKeyDown);
+    // タッチは伝播だけ止める（フォーカス殺さない）
+    bar.addEventListener('pointerdown', stopOnly);
+    bar.addEventListener('touchstart', stopOnly, { passive:true });
   
-    bar.addEventListener('touchstart', onTouch, { passive:false });
-    bar.addEventListener('touchmove',  onTouch, { passive:false });
-  
-    this._fixedHandlers = { onBtnClick, onBtnPointerDown, onInputKeyDown, onTouch };
+    this._fixedHandlers = { onClick, onKey, stopOnly };
   
     this._fixedBar = bar;
     this._fixedInput = input;
     this._fixedSend = btn;
   }
+  
+  _destroyFixedInputBar(){
+    if (this._fixedBar){
+      const bar = this._fixedBar;
+      const input = this._fixedInput;
+      const btn = this._fixedSend;
+      const h = this._fixedHandlers;
+  
+      try{
+        if (h && btn) btn.removeEventListener('click', h.onClick);
+        if (h && input) input.removeEventListener('keydown', h.onKey);
+        if (h && bar){
+          bar.removeEventListener('pointerdown', h.stopOnly);
+          bar.removeEventListener('touchstart', h.stopOnly);
+        }
+      }catch(_){}
+  
+      bar.remove();
+    }
+  
+    this._fixedBar = null;
+    this._fixedInput = null;
+    this._fixedSend = null;
+    this._fixedHandlers = null;
+  }
+  
   
   _destroyFixedInputBar(){
     if (this._fixedBar){
