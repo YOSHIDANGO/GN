@@ -20,9 +20,6 @@ export class ClubScene extends Phaser.Scene {
     // 送信中ガード
     this.pending = false;
 
-    // サーバセッションID
-    this.sessionId = null;
-
     // =========================
     // character def（表示だけに使う）
     // =========================
@@ -39,7 +36,7 @@ export class ClubScene extends Phaser.Scene {
     };
 
     // =========================
-    // local mirrors（表示用：正はサーバstate）
+    // local state（正はクライアント）
     // =========================
     this.turn = 1;
     this.affinity = 0;
@@ -177,72 +174,15 @@ export class ClubScene extends Phaser.Scene {
     this._onResize = () => this.time.delayedCall(0, layout);
     this.scale.on('resize', this._onResize);
 
-    // 初回表示（session開始で上書き）
+    // 初回表示（stateless）
     this._renderTurn();
-
-    // ここで session 開始
-    this._startSession();
+    this._showNpc('いらっしゃい。今日はどうする');
   }
 
   update(){
     if (Phaser.Input.Keyboard.JustDown(this.keyEsc)){
       this._endAndReturn();
     }
-  }
-
-  // =========================
-  // session
-  // =========================
-  async _startSession(){
-    // ローディングっぽく一言
-    this._showNpc('……');
-
-    try {
-      const res = await fetch('/api/club/session', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json' },
-        body: JSON.stringify({ characterId: this.characterId })
-      });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const json = await res.json();
-      if (!json || typeof json !== 'object') throw new Error('bad json');
-
-      // sessionId
-      this.sessionId = (json.sessionId || '').toString() || null;
-
-      // state を反映（正はサーバ）
-      if (json.state && typeof json.state === 'object'){
-        this._applyServerState(json.state);
-      }
-
-      // 初手
-      if (typeof json.npcText === 'string'){
-        this._showNpc(json.npcText);
-      } else {
-        this._showNpc('いらっしゃい。今日はどうする');
-      }
-
-    } catch (e){
-      // 失敗したらローカル続行（デバッグ用）
-      this.sessionId = 'local_dummy';
-      this._showNpc('いらっしゃい。今日はどうする');
-    }
-  }
-
-  _applyServerState(state){
-    const t = Number(state.turn ?? this.turn);
-    const a = Number(state.affinity ?? this.affinity);
-    const i = Number(state.interest ?? this.interest);
-    const r = Number(state.irritation ?? this.irritation);
-
-    this.turn = Phaser.Math.Clamp(t, 1, 999);
-    this.affinity = Phaser.Math.Clamp(a, -50, 999);
-    this.interest = Phaser.Math.Clamp(i, -50, 999);
-    this.irritation = Phaser.Math.Clamp(r, 0, 999);
-
-    this._renderTurn();
   }
 
   // =========================
@@ -362,7 +302,7 @@ export class ClubScene extends Phaser.Scene {
 
     if (this.debug.text){
       this.debug.text.setText(
-        `sid=${this.sessionId || '-'}\naff=${this.affinity} int=${this.interest} irr=${this.irritation}`
+        `aff=${this.affinity} int=${this.interest} irr=${this.irritation}`
       );
     }
   }
@@ -371,6 +311,27 @@ export class ClubScene extends Phaser.Scene {
     this.lastNpcText = text || '';
     this.ui.setName(this.char.name);
     this.ui.setText(this.lastNpcText);
+  }
+
+  // =========================
+  // night summary（ローカル生成）
+  // =========================
+  _buildNightSummary(){
+    const t =
+      this.turn <= 3 ? '序盤' :
+      this.turn <= 7 ? '中盤' : '終盤';
+
+    const mood =
+      this.irritation >= 70 ? '空気ピリつき' :
+      this.affinity >= 30 ? '距離近め' :
+      this.interest >= 60 ? 'ノリ良め' :
+      '様子見';
+
+    // 必要なら topic とかここに足す（固定で短く）
+    const extra = '';
+
+    const s = `${t}。${mood}。${extra}`.trim();
+    return s.length > 60 ? s.slice(0, 60) : s;
   }
 
   // =========================
@@ -388,12 +349,6 @@ export class ClubScene extends Phaser.Scene {
     if (this.ended) return;
     if (this.pending) return;
 
-    // session開始前は弾く（押し負け防止）
-    if (!this.sessionId){
-      this._showNpc('ちょい待って');
-      return;
-    }
-
     this.pending = true;
     this._setFixedBarEnabled(false);
 
@@ -403,18 +358,20 @@ export class ClubScene extends Phaser.Scene {
       const payload = this._makeTurnPayload(text);
       const out = await this._callServer(payload);
 
-      // サーバstateが来たら、それを正として反映
-      if (out?.state && typeof out.state === 'object'){
-        this._applyServerState(out.state);
-      } else {
-        // 保険（state無い場合だけdeltaで加算）
-        const dh = out?.deltaHint || { affinity:0, interest:0, irritation:0 };
-        this.affinity += Number(dh.affinity || 0);
-        this.interest += Number(dh.interest || 0);
-        this.irritation = Math.max(0, this.irritation + Number(dh.irritation || 0));
-        this.turn += 1;
-        this._renderTurn();
-      }
+      // stateless：常にdeltaで更新（クライアントが正）
+      const d = out?.delta || { affinity:0, interest:0, irritation:0 };
+
+      this.affinity += Number(d.affinity || 0);
+      this.interest += Number(d.interest || 0);
+      this.irritation = Math.max(0, this.irritation + Number(d.irritation || 0));
+
+      // clamp
+      this.affinity = Phaser.Math.Clamp(this.affinity, -50, 999);
+      this.interest = Phaser.Math.Clamp(this.interest, -50, 999);
+      this.irritation = Phaser.Math.Clamp(this.irritation, 0, 999);
+
+      this.turn += 1;
+      this._renderTurn();
 
       // 表示
       this._showNpc(out?.npcText || '……');
@@ -443,7 +400,21 @@ export class ClubScene extends Phaser.Scene {
 
   _makeTurnPayload(playerText){
     return {
-      sessionId: this.sessionId,
+      characterId: this.characterId,
+      turn: this.turn,
+
+      affinity: this.affinity,
+      interest: this.interest,
+      irritation: this.irritation,
+      threshold: this.char.irritation_threshold,
+
+      nightSummary: this._buildNightSummary(),
+
+      last: {
+        npcText: this.lastNpcText || '',
+        playerText: this.lastPlayerText || ''
+      },
+
       playerText
     };
   }
@@ -459,8 +430,8 @@ export class ClubScene extends Phaser.Scene {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       let json = await res.json();
-
       if (!json || typeof json !== 'object') json = {};
+
       if (typeof json.npcText !== 'string') json.npcText = '……';
 
       if (!json.signals || typeof json.signals !== 'object'){
@@ -470,12 +441,12 @@ export class ClubScene extends Phaser.Scene {
         if (typeof json.signals.distance !== 'number') json.signals.distance = 0;
       }
 
-      if (!json.deltaHint || typeof json.deltaHint !== 'object'){
-        json.deltaHint = { affinity:0, interest:0, irritation:0 };
+      if (!json.delta || typeof json.delta !== 'object'){
+        json.delta = { affinity:0, interest:0, irritation:0 };
       } else {
-        json.deltaHint.affinity = Number(json.deltaHint.affinity || 0);
-        json.deltaHint.interest = Number(json.deltaHint.interest || 0);
-        json.deltaHint.irritation = Number(json.deltaHint.irritation || 0);
+        json.delta.affinity = Number(json.delta.affinity || 0);
+        json.delta.interest = Number(json.delta.interest || 0);
+        json.delta.irritation = Number(json.delta.irritation || 0);
       }
 
       if (!json.flags || typeof json.flags !== 'object'){
@@ -485,12 +456,13 @@ export class ClubScene extends Phaser.Scene {
       }
 
       return json;
+
     } catch (e){
       // サーバ死んだ時：最低限の形
       return {
         npcText: 'ごめん、聞き取れなかった',
         signals: { mood:'neutral', distance:0 },
-        deltaHint: { affinity:0, interest:0, irritation:0 },
+        delta: { affinity:0, interest:0, irritation:0 },
         flags: { forceEnd:false }
       };
     }
