@@ -223,32 +223,43 @@ export class ClubResultScene extends Phaser.Scene {
     try { this.scene.bringToTop(key); } catch (e) {}
   }
 
-  _goBack(){
-    this._reviveReturnScene();
-    try { this.scene.bringToTop(this.returnTo); } catch(e){}
-    this.scene.stop('ClubResult');
-  }
-
   _retry(){
-    if (this.scene.isActive('Club')) this.scene.stop('Club');
-
-    // 戻り先は pause して上に Club を重ねるのが安定
-    const key = this.returnTo;
-
-    if (this.scene.isActive(key) && !this.scene.isPaused(key)){
-      this.scene.pause(key);
-    } else if (this.scene.isSleeping(key)){
-      this.scene.wake(key);
-      this.scene.pause(key);
+    // 念のため：生き残ってたら止める
+    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isVisible('Club')){
+      this.scene.stop('Club');
     }
-
+  
+    // returnTo 側は一旦止めず、Club起動時に pause するかは運用次第
+    // ただ今の構成（FieldをpauseしてClubをlaunch）に合わせるなら pause 推奨
+    if (this.returnTo && this.scene.isActive(this.returnTo)){
+      this.scene.pause(this.returnTo);
+    }
+  
     this.scene.stop('ClubResult');
-
+  
     this.scene.launch('Club', {
-      returnTo: this.returnTo,
-      characterId: this.characterId
+      returnTo: this.returnTo || 'Field',
+      characterId: this.characterId || 'rei',
+      debug: false
     });
-
     this.scene.bringToTop('Club');
   }
+  
+  _goBack(){
+    // 念のため：Clubを必ず止める
+    if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isVisible('Club')){
+      this.scene.stop('Club');
+    }
+  
+    this.scene.stop('ClubResult');
+  
+    // returnTo を確実に復帰
+    if (this.returnTo){
+      if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
+      else if (this.scene.isSleeping(this.returnTo)) this.scene.wake(this.returnTo);
+      else if (!this.scene.isActive(this.returnTo)) this.scene.start(this.returnTo);
+      this.scene.bringToTop(this.returnTo);
+    }
+  }
+  
 }
