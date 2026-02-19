@@ -197,6 +197,11 @@ export class ClubScene extends Phaser.Scene {
   // fixed input bar helpers
   // =========================
   _createFixedInputBar(){
+
+    // 参照がない取り残しDOMも消す（2回目送れない対策の本命）
+    const old = document.getElementById('club-fixed-bar');
+    if (old) old.remove();
+
     this._destroyFixedInputBar();
 
     const bar = document.createElement('div');
@@ -575,6 +580,10 @@ export class ClubScene extends Phaser.Scene {
     }
 
     this._destroyFixedInputBar();
+
+    // 念のためDOM直指定でも消す
+    const old = document.getElementById('club-fixed-bar');
+    if (old) old.remove();
 
     if (this.endOverlay){ this.endOverlay.destroy(); this.endOverlay = null; }
     if (this.endBoy){ this.endBoy.destroy(); this.endBoy = null; }
