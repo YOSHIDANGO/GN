@@ -234,17 +234,26 @@ export class ClubScene extends Phaser.Scene {
     const onBtnClick = (e) => { stopOnly(e); doSend(); };
     const onBtnPointerUp = (e) => { stopOnly(e); doSend(); };
   
-    const onCompositionStart = (e) => { stopOnly(e); this._imeComposing = true; };
-    const onCompositionEnd   = (e) => { stopOnly(e); this._imeComposing = false; };
-  
-    const onInputKeyDown = (e) => {
-      stopOnly(e);
-  
-      if (e.key === 'Enter' && !e.isComposing && !this._imeComposing){
-        e.preventDefault();
-        doSend();
-      }
-    };
+    const onCompositionStart = () => {
+        this._imeComposing = true;
+      };
+      
+      const onCompositionEnd = () => {
+        this._imeComposing = false;
+      };
+      
+      const onInputKeyUp = (e) => {
+        stopOnly(e);
+      
+        if (e.key === 'Enter'){
+          // IME変換中なら送信しない
+          if (this._imeComposing || e.isComposing) return;
+      
+          e.preventDefault();
+          doSend();
+        }
+      };
+      
   
     // captureで止める（Phaserへ流れにくくなる）
     bar.addEventListener('pointerdown', stopOnly, true);
@@ -255,9 +264,9 @@ export class ClubScene extends Phaser.Scene {
     btn.addEventListener('click', onBtnClick);
     btn.addEventListener('pointerup', onBtnPointerUp);
   
-    input.addEventListener('keydown', onInputKeyDown);
     input.addEventListener('compositionstart', onCompositionStart);
     input.addEventListener('compositionend', onCompositionEnd);
+    input.addEventListener('keyup', onInputKeyUp);
   
     this._fixedHandlers = {
       stopOnly,
@@ -298,9 +307,9 @@ export class ClubScene extends Phaser.Scene {
       }
       if (h && input){
         input.removeEventListener('pointerdown', h.stopOnly, true);
-        input.removeEventListener('keydown', h.onInputKeyDown);
         input.removeEventListener('compositionstart', h.onCompositionStart);
         input.removeEventListener('compositionend', h.onCompositionEnd);
+        input.removeEventListener('keyup', h.onInputKeyUp);
       }
       if (h && btn){
         btn.removeEventListener('pointerdown', h.stopOnly, true);
