@@ -6,146 +6,118 @@ export class DialogueScene extends Phaser.Scene {
 
   create(data){
     this.returnTo = data?.returnTo || 'Field';
-    const scriptKey = data?.scriptKey || 'story_opening';
-    const script = this.cache.json.get(scriptKey) || {};
+    this.scriptKey = data?.scriptKey || '';
+    this.defaultBgKey = data?.bgKey || null;
 
-    this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
+    // script
+    this.script = this.cache.json.get(this.scriptKey) || null;
+    if (!this.script){
+      this._return();
+      return;
+    }
 
-    this.bgKey = data?.bgKey || script?.bgKey || 'bg_susukino_night_01';
-    this.bg = this.add.image(640, 360, this.bgKey)
-      .setDisplaySize(1280, 720)
-      .setDepth(0)
-      .setVisible(false);
-
-    this.ui = new DialogueUI(this);
-
-    this.lines = Array.isArray(script.lines) ? script.lines : [];
     this.idx = 0;
 
-    this.charas = [];
+    // bg（前の版で setVisible(false) してたのが「ダイアログ消えた」主因になりやすい）
+    const firstBgKey = this.defaultBgKey || this.script.bgKey || 'bg_shop_inside';
+    this.bg = this.add.image(0, 0, firstBgKey).setOrigin(0.5,0.5).setDepth(0);
 
-    this.keySpace = this.input.keyboard.addKey('SPACE');
-    this.keyEsc   = this.input.keyboard.addKey('ESC');
+    // UI
+    this.ui = new DialogueUI(this);
 
-    // ★ここが大事：下のシーンに入力落とさない
+    // input
     this.input.setTopOnly(true);
 
-    // ★全画面タップレイヤ（透明）
-    const makeTapLayer = () => {
+    // tap to next
+    this._onDown = () => this._next();
+    this.input.on('pointerdown', this._onDown);
+
+    // resize
+    const layout = () => {
       const w = this.scale.width;
       const h = this.scale.height;
 
-      if (this.tapLayer){
-        this.tapLayer.destroy();
-        this.tapLayer = null;
-      }
-
-      this.tapLayer = this.add.zone(w/2, h/2, w, h)
-        .setOrigin(0.5)
-        .setScrollFactor(0)
-        .setDepth(99999)
-        .setInteractive({ useHandCursor:false });
-
-      this.tapLayer.on('pointerdown', (pointer)=>{
-        // ネイティブイベントも止めておくと堅い
-        pointer.event?.stopPropagation?.();
-        this._next();
-      });
+      this.bg.setPosition(w/2, h/2);
+      const sx = w / (this.bg.width || 1);
+      const sy = h / (this.bg.height || 1);
+      this.bg.setScale(Math.max(sx, sy));
     };
 
-    makeTapLayer();
+    layout();
+    this._onResize = () => this.time.delayedCall(0, layout);
+    this.scale.on('resize', this._onResize);
 
-    this._onResizeTap = () => {
-      this.time.delayedCall(0, () => makeTapLayer());
-    };
-    this.scale.on('resize', this._onResizeTap);
+    this._renderLine();
 
-    this._show();
+    this.events.once('shutdown', () => this._cleanup());
+    this.events.once('destroy', () => this._cleanup());
   }
 
-  update(){
-    if (Phaser.Input.Keyboard.JustDown(this.keySpace)) this._next();
-    if (Phaser.Input.Keyboard.JustDown(this.keyEsc)) this._end();
+  _cleanup(){
+    if (this._onResize){
+      this.scale.off('resize', this._onResize);
+      this._onResize = null;
+    }
+    if (this._onDown){
+      this.input.off('pointerdown', this._onDown);
+      this._onDown = null;
+    }
   }
 
-  _clearCharas(){
-    for (const c of this.charas) c.destroy();
-    this.charas = [];
-  }
+  _setBg(key){
+    if (!key) return;
+    if (this.bg && this.bg.texture && this.bg.texture.key === key) return;
 
-  _addChara(def){
-    if (!def || !def.key) return;
+    if (this.bg) this.bg.destroy();
+    this.bg = this.add.image(0, 0, key).setOrigin(0.5,0.5).setDepth(0);
 
     const w = this.scale.width;
     const h = this.scale.height;
-
-    const x = (typeof def.x === 'number') ? def.x : 360;
-
-    const baseBottomY = this.ui.getPortraitBottomY(Math.max(8, Math.floor(h * 0.015)));
-    const bottomY = (typeof def.y === 'number') ? def.y : baseBottomY;
-
-    const reqScale = (typeof def.scale === 'number') ? def.scale : 0.5;
-
-    const img = this.add.image(x, bottomY, def.key)
-      .setOrigin(0.5, 1)
-      .setDepth(900);
-
-    const safeTop = Math.max(10, Math.floor(h * 0.02));
-    const maxH = Math.max(220, bottomY - safeTop);
-    const maxW = Math.min(Math.floor(w * 0.48), 680);
-
-    const texW = img.width || 1;
-    const texH = img.height || 1;
-
-    const maxScaleH = maxH / texH;
-    const maxScaleW = maxW / texW;
-
-    const scale = Math.min(reqScale, maxScaleH, maxScaleW);
-
-    img.setScale(scale);
-
-    this.charas.push(img);
+    this.bg.setPosition(w/2, h/2);
+    const sx = w / (this.bg.width || 1);
+    const sy = h / (this.bg.height || 1);
+    this.bg.setScale(Math.max(sx, sy));
   }
 
-  _show(){
-    const line = this.lines[this.idx];
-    if (!line){ this._end(); return; }
-
-    const hasChara = !!(line.chars || line.charaKey);
-    this.bg.setVisible(hasChara);
-
-    this._clearCharas();
-
-    if (Array.isArray(line.chars)){
-      for (const def of line.chars) this._addChara(def);
-    } else if (line.charaKey){
-      this._addChara({
-        key: line.charaKey,
-        x: (typeof line.charaX === 'number') ? line.charaX : 360,
-        y: (typeof line.charaY === 'number') ? line.charaY : undefined,
-        scale: (typeof line.charaScale === 'number') ? line.charaScale : 0.5
-      });
+  _renderLine(){
+    const lines = this.script?.lines || [];
+    if (this.idx < 0 || this.idx >= lines.length){
+      this._return();
+      return;
     }
 
-    this.ui.setName(line.name || '');
-    this.ui.setText(line.text || '');
+    const line = lines[this.idx] || {};
+    const name = line.name || '';
+    const text = line.text || '';
+
+    const bgKey = line.bgKey || this.defaultBgKey || this.script.bgKey;
+    if (bgKey) this._setBg(bgKey);
+
+    this.ui.setName(name);
+    this.ui.setText(text);
   }
 
   _next(){
+    const lines = this.script?.lines || [];
     this.idx += 1;
-    this._show();
-  }
 
-  _end(){
-    this._clearCharas();
-
-    // ★リサイズ監視解除
-    if (this._onResizeTap){
-      this.scale.off('resize', this._onResizeTap);
-      this._onResizeTap = null;
+    if (this.idx >= lines.length){
+      this._return();
+      return;
     }
 
+    this._renderLine();
+  }
+
+  _return(){
     this.scene.stop('Dialogue');
-    this.scene.resume(this.returnTo);
+
+    if (this.scene.get(this.returnTo)){
+      if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
+      this.scene.bringToTop(this.returnTo);
+
+      const f = this.scene.get(this.returnTo);
+      if (f) f._resumeReason = 'dialogue';
+    }
   }
 }

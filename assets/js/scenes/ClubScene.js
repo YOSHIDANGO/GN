@@ -12,17 +12,8 @@ export class ClubScene extends Phaser.Scene {
     this.characterId = data?.characterId || 'rei';
     this.boyKey = data?.boyKey || 'boy_normal';
 
-    this.input.setTopOnly(true);
-
-    // スマホ判定（ざっくり）
-    this.isTouch = !this.sys.game.device.os.desktop;
-
     // 送信中ガード
     this.pending = false;
-
-    // ★固定バーの高さ（CSS px / world px 両方持つ）
-    this._fixedBarCssPx = 0;
-    this._fixedBarWorldPx = 0;
 
     // =========================
     // character def（表示だけに使う）
@@ -53,7 +44,7 @@ export class ClubScene extends Phaser.Scene {
     // =========================
     // visuals
     // =========================
-    this.bg = this.add.image(0, 0, this.char.bgKey).setOrigin(0.5, 0.5);
+    this.bg = this.add.image(0, 0, this.char.bgKey).setOrigin(0.5, 0.5).setDepth(0);
 
     const fitBg = () => {
       const w = this.scale.width;
@@ -66,12 +57,6 @@ export class ClubScene extends Phaser.Scene {
 
     // Dialogue UI
     this.ui = new DialogueUI(this);
-
-    // ★UIが裏に回る事故を保険で防ぐ（DialogueUIの実装に依存しない範囲）
-    // あるものだけ上げる
-    if (this.ui?.backdrop) this.ui.backdrop.setDepth(1600);
-    if (this.ui?.nameText) this.ui.nameText.setDepth(1601);
-    if (this.ui?.bodyText) this.ui.bodyText.setDepth(1601);
 
     // 立ち絵（中央寄せ）
     this.portrait = this.add.image(0, 0, this.char.portraitKey)
@@ -97,20 +82,19 @@ export class ClubScene extends Phaser.Scene {
     }
 
     // =========================
-    // input bar (PC & mobile)
-    //  - DOM input is used so IME (Japanese) works
-    //  - bar is attached inside #game root so it follows viewport transforms
+    // fixed input bar（PC/スマホ共通 / DOM）
     // =========================
     this._fixedBar = null;
     this._fixedInput = null;
     this._fixedSend = null;
     this._fixedHandlers = null;
-    this._imeComposing = false;
 
     this._createFixedInputBar();
 
-    // PC safety: ESC to end
-    this.keyEsc = this.input.keyboard?.addKey?.(Phaser.Input.Keyboard.KeyCodes.ESC);
+    // =========================
+    // interaction keys
+    // =========================
+    this.keyEsc = this.input.keyboard?.addKey('ESC');
 
     // =========================
     // resize/layout
@@ -121,35 +105,18 @@ export class ClubScene extends Phaser.Scene {
 
       fitBg();
 
-      // ★DOMバーの高さを world 座標に換算（FITでもズレないように）
-      this._updateFixedBarWorldPx();
-
       this.turnText.setPosition(
         Math.max(14, Math.floor(w*0.02)),
         Math.max(10, Math.floor(h*0.02))
       );
 
-      // ★会話UIの下端が固定バーに被らないようにするための「下インセット」
-      // DialogueUIが自前でレイアウトしてる前提なので、できる範囲で寄せる
-      // 1) ui.backdrop があるならそれを上げる
-      // 2) ui側に setBottomInset があれば呼ぶ（将来対応）
-      const inset = Math.max(0, this._fixedBarWorldPx);
-      if (this.ui?.setBottomInset){
-        this.ui.setBottomInset(inset);
-      } else if (this.ui?.backdrop){
-        // backdrop の "下端" が h - inset になるように
-        const bd = this.ui.backdrop;
-        const bh = (bd.displayHeight || bd.height || 0);
-        // originが0.5想定で中央Yを決める（違っても大崩れしにくい）
-        const y = Math.floor(h - inset - bh * 0.5 - 10);
-        bd.setPosition(Math.floor(w/2), y);
-        // テキスト類も追従（存在するものだけ）
-        if (this.ui?.nameText) this.ui.nameText.setY(y - Math.floor(bh*0.32));
-        if (this.ui?.bodyText) this.ui.bodyText.setY(y - Math.floor(bh*0.12));
+      // 立ち絵の足元は、UIの上に来るようにする
+      let bottomY = h - Math.floor(h * 0.06);
+      if (this.ui && this.ui.backdrop){
+        const uiTop = this.ui.backdrop.y - (this.ui.backdrop.height || 0) / 2;
+        bottomY = Math.min(bottomY, uiTop - 8);
       }
 
-      // 立ち絵は会話枠の上に合わせたいので、DialogueUIが持ってる下ラインを使う
-      const bottomY = this.ui.getPortraitBottomY(Math.max(8, Math.floor(h * 0.015)));
       this.portrait.setPosition(Math.floor(w * 0.5), bottomY);
 
       const safeTop = Math.max(10, Math.floor(h*0.02));
@@ -174,12 +141,13 @@ export class ClubScene extends Phaser.Scene {
     this._renderTurn();
     this._showNpc('いらっしゃい。今日はどうする');
 
-    this.events.once('shutdown', () => { this._cleanup(); });
-    this.events.once('destroy',  () => { this._cleanup(); });
+    // cleanup
+    this.events.once('shutdown', () => this._cleanup());
+    this.events.once('destroy', () => this._cleanup());
   }
 
   update(){
-    if (Phaser.Input.Keyboard.JustDown(this.keyEsc)){
+    if (this.keyEsc && Phaser.Input.Keyboard.JustDown(this.keyEsc)){
       this._endAndReturn();
     }
   }
@@ -188,26 +156,22 @@ export class ClubScene extends Phaser.Scene {
   // fixed input bar helpers
   // =========================
   _createFixedInputBar(){
-    // important: blur before remove so mobile doesn't get stuck showing only the keyboard
-    try{ this._fixedInput?.blur?.(); }catch(_){ }
     this._destroyFixedInputBar();
-
-    // Attach inside the Phaser root so it follows viewport transforms (keyboard / visualViewport shifts)
-    const root = document.getElementById('game') || document.body;
 
     const bar = document.createElement('div');
     bar.id = 'club-fixed-bar';
 
-    bar.style.position = 'absolute';
+    bar.style.position = 'fixed';
     bar.style.left = '0';
     bar.style.right = '0';
     bar.style.bottom = '0';
     bar.style.zIndex = '99999';
     bar.style.padding = '10px 12px calc(10px + env(safe-area-inset-bottom)) 12px';
-    // Don't hide the in-canvas dialogue box behind a full-width dark panel.
-    // Only the input/button should be interactive.
-    bar.style.background = 'transparent';
+    bar.style.background = 'rgba(0,0,0,0.35)';
+    bar.style.backdropFilter = 'blur(6px)';
+    bar.style.webkitBackdropFilter = 'blur(6px)';
     bar.style.boxSizing = 'border-box';
+    bar.style.pointerEvents = 'auto';
 
     bar.innerHTML = `
       <div style="
@@ -218,6 +182,8 @@ export class ClubScene extends Phaser.Scene {
         box-sizing:border-box;
       ">
         <input id="club-fixed-input" type="text" placeholder="ここに入力"
+          autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"
+          inputmode="text"
           style="
             flex:1;
             min-width:0;
@@ -232,7 +198,7 @@ export class ClubScene extends Phaser.Scene {
             box-sizing:border-box;
           "
         />
-        <button id="club-fixed-send"
+        <button id="club-fixed-send" type="button"
           style="
             width:110px;
             height:48px;
@@ -247,9 +213,7 @@ export class ClubScene extends Phaser.Scene {
       </div>
     `;
 
-    // container itself doesn't take pointer events (so Dialogue / canvas remains tappable)
-    bar.style.pointerEvents = 'none';
-    root.appendChild(bar);
+    document.body.appendChild(bar);
 
     const input = bar.querySelector('#club-fixed-input');
     const btn = bar.querySelector('#club-fixed-send');
@@ -258,18 +222,6 @@ export class ClubScene extends Phaser.Scene {
       bar.remove();
       return;
     }
-
-    // container is pointerEvents:none, so enable controls explicitly
-    input.style.pointerEvents = 'auto';
-    btn.style.pointerEvents = 'auto';
-
-    // ★バー高さを記録（レイアウトで使う）
-    this._fixedBarCssPx = Math.ceil(bar.getBoundingClientRect().height);
-
-    const stopOnly = (e) => {
-      // 入力は止めない。伝播だけ止める
-      e?.stopPropagation?.();
-    };
 
     const doSend = () => {
       if (this.ended) return;
@@ -283,59 +235,44 @@ export class ClubScene extends Phaser.Scene {
       input.blur();
     };
 
-    const onBtnClick = (e) => {
-      e?.preventDefault?.();
-      stopOnly(e);
-      doSend();
-    };
+    // Phaser側にタップが流れるのを止める（スマホの遷移・フリーズ対策）
+    // preventDefault は input のフォーカスを潰すので使わない
+    const stopOnly = (e) => { e?.stopPropagation?.(); };
 
     const onBtnPointerDown = (e) => {
-      e?.preventDefault?.();
-      stopOnly(e);
+      e?.stopPropagation?.();
       doSend();
     };
-
-    // ★IME安定（日本語入力）
-    const onCompositionStart = () => { this._imeComposing = true; };
-    const onCompositionEnd   = () => { this._imeComposing = false; };
-
-    // ★keyupにする（確定後Enterが拾いやすい）
-    const onInputKeyUp = (e) => {
-      stopOnly(e);
+    const onBtnClick = (e) => {
+      e?.stopPropagation?.();
+      doSend();
+    };
+    const onInputKeyDown = (e) => {
       if (e.key === 'Enter'){
-        if (this._imeComposing || e.isComposing) return;
         e.preventDefault();
+        e.stopPropagation?.();
         doSend();
       }
     };
 
-    // ★タップ伝播だけ止める（preventDefaultしない。キーボード出なくなるから）
-    const onTouchStart = (e) => { e?.stopPropagation?.(); };
-    const onTouchMove  = (e) => { e?.stopPropagation?.(); };
+    // capturingで先に止める
+    bar.addEventListener('pointerdown', stopOnly, true);
+    bar.addEventListener('touchstart', stopOnly, true);
+    bar.addEventListener('mousedown', stopOnly, true);
 
+    input.addEventListener('pointerdown', stopOnly, true);
+    input.addEventListener('touchstart', stopOnly, true);
+    input.addEventListener('mousedown', stopOnly, true);
+
+    btn.addEventListener('pointerdown', onBtnPointerDown, true);
     btn.addEventListener('click', onBtnClick);
-    btn.addEventListener('pointerdown', onBtnPointerDown);
+    input.addEventListener('keydown', onInputKeyDown);
 
-    input.addEventListener('compositionstart', onCompositionStart);
-    input.addEventListener('compositionend', onCompositionEnd);
-    input.addEventListener('keyup', onInputKeyUp);
-
-    bar.addEventListener('touchstart', onTouchStart, { passive:true });
-    bar.addEventListener('touchmove',  onTouchMove,  { passive:true });
-
-    this._fixedHandlers = {
-      onBtnClick, onBtnPointerDown,
-      onCompositionStart, onCompositionEnd,
-      onInputKeyUp,
-      onTouchStart, onTouchMove
-    };
+    this._fixedHandlers = { stopOnly, onBtnPointerDown, onBtnClick, onInputKeyDown };
 
     this._fixedBar = bar;
     this._fixedInput = input;
     this._fixedSend = btn;
-
-    // 初回レイアウト反映
-    this._updateFixedBarWorldPx();
   }
 
   _destroyFixedInputBar(){
@@ -346,18 +283,20 @@ export class ClubScene extends Phaser.Scene {
       const h = this._fixedHandlers;
 
       try{
-        if (h && btn){
-          btn.removeEventListener('click', h.onBtnClick);
-          btn.removeEventListener('pointerdown', h.onBtnPointerDown);
+        if (h && bar){
+          bar.removeEventListener('pointerdown', h.stopOnly, true);
+          bar.removeEventListener('touchstart', h.stopOnly, true);
+          bar.removeEventListener('mousedown', h.stopOnly, true);
         }
         if (h && input){
-          input.removeEventListener('compositionstart', h.onCompositionStart);
-          input.removeEventListener('compositionend', h.onCompositionEnd);
-          input.removeEventListener('keyup', h.onInputKeyUp);
+          input.removeEventListener('pointerdown', h.stopOnly, true);
+          input.removeEventListener('touchstart', h.stopOnly, true);
+          input.removeEventListener('mousedown', h.stopOnly, true);
+          input.removeEventListener('keydown', h.onInputKeyDown);
         }
-        if (h && bar){
-          bar.removeEventListener('touchstart', h.onTouchStart);
-          bar.removeEventListener('touchmove',  h.onTouchMove);
+        if (h && btn){
+          btn.removeEventListener('pointerdown', h.onBtnPointerDown, true);
+          btn.removeEventListener('click', h.onBtnClick);
         }
       }catch(_){}
 
@@ -368,9 +307,6 @@ export class ClubScene extends Phaser.Scene {
     this._fixedInput = null;
     this._fixedSend = null;
     this._fixedHandlers = null;
-
-    this._fixedBarCssPx = 0;
-    this._fixedBarWorldPx = 0;
   }
 
   _setFixedBarEnabled(enabled){
@@ -381,26 +317,6 @@ export class ClubScene extends Phaser.Scene {
 
     this._fixedInput.style.opacity = enabled ? '1' : '0.6';
     this._fixedSend.style.opacity = enabled ? '1' : '0.6';
-  }
-
-  _updateFixedBarWorldPx(){
-    if (!this._fixedBar) { this._fixedBarWorldPx = 0; return; }
-
-    // CSS px を world px に換算
-    const barPx = Math.ceil(this._fixedBar.getBoundingClientRect().height);
-    this._fixedBarCssPx = barPx;
-
-    const canvas = this.game?.canvas;
-    const rectH = canvas?.getBoundingClientRect?.().height || 0;
-
-    if (rectH > 0){
-      const worldH = this.scale.height; // 720想定
-      const ratio = worldH / rectH;
-      this._fixedBarWorldPx = Math.ceil(barPx * ratio);
-    } else {
-      // fallback
-      this._fixedBarWorldPx = Math.ceil(barPx * 0.6);
-    }
   }
 
   // =========================
@@ -437,22 +353,13 @@ export class ClubScene extends Phaser.Scene {
       this.interest >= 60 ? 'ノリ良め' :
       '様子見';
 
-    const extra = '';
-    const s = `${t}。${mood}。${extra}`.trim();
+    const s = `${t}。${mood}。`.trim();
     return s.length > 60 ? s.slice(0, 60) : s;
   }
 
   // =========================
   // turn flow
   // =========================
-  _submit(){
-    const text = (this.buf || '').trim();
-    if (!text) return;
-
-    this.buf = '';
-    this._submitText(text);
-  }
-
   async _submitText(text){
     if (this.ended) return;
     if (this.pending) return;
@@ -466,12 +373,14 @@ export class ClubScene extends Phaser.Scene {
       const payload = this._makeTurnPayload(text);
       const out = await this._callServer(payload);
 
+      // stateless：常にdeltaで更新（クライアントが正）
       const d = out?.delta || { affinity:0, interest:0, irritation:0 };
 
       this.affinity += Number(d.affinity || 0);
       this.interest += Number(d.interest || 0);
       this.irritation = Math.max(0, this.irritation + Number(d.irritation || 0));
 
+      // clamp
       this.affinity = Phaser.Math.Clamp(this.affinity, -50, 999);
       this.interest = Phaser.Math.Clamp(this.interest, -50, 999);
       this.irritation = Phaser.Math.Clamp(this.irritation, 0, 999);
@@ -479,14 +388,18 @@ export class ClubScene extends Phaser.Scene {
       this.turn += 1;
       this._renderTurn();
 
+      // 表示
       this._showNpc(out?.npcText || '……');
 
+      // 終了判定（基本はサーバ flags）
       const forceEnd = !!out?.flags?.forceEnd;
+
       if (forceEnd){
         this._finishNight({ forced:true });
         return;
       }
 
+      // 10ターン
       if (this.turn > 10){
         this._finishNight({ forced:false });
         return;
@@ -559,7 +472,7 @@ export class ClubScene extends Phaser.Scene {
 
       return json;
 
-    } catch (_e){
+    } catch (e){
       return {
         npcText: 'ごめん、聞き取れなかった',
         signals: { mood:'neutral', distance:0 },
@@ -576,6 +489,7 @@ export class ClubScene extends Phaser.Scene {
     this.ended = true;
     this._setFixedBarEnabled(false);
 
+    // 会話UIを薄くして被り軽減
     if (this.ui?.backdrop) this.ui.backdrop.setAlpha(0.35);
     if (this.ui?.nameText) this.ui.nameText.setAlpha(0.55);
     if (this.ui?.bodyText) this.ui.bodyText.setAlpha(0.55);
@@ -634,8 +548,8 @@ export class ClubScene extends Phaser.Scene {
       }
 
       this.endOverlay.on('pointerdown', () => {
+        // ここでClubを確実に止めてからResultへ
         this._cleanup();
-
         this.scene.stop('Club');
         this.scene.launch('ClubResult', {
           returnTo: this.returnTo,
@@ -646,6 +560,7 @@ export class ClubScene extends Phaser.Scene {
           threshold: this.char.irritation_threshold,
           forced: !!forced
         });
+        this.scene.bringToTop('ClubResult');
       });
     });
   }
@@ -654,16 +569,13 @@ export class ClubScene extends Phaser.Scene {
     this._cleanup();
     this.scene.stop('Club');
     this.scene.resume(this.returnTo);
+    this.scene.bringToTop(this.returnTo);
   }
 
   _cleanup(){
     if (this._onResize){
       this.scale.off('resize', this._onResize);
       this._onResize = null;
-    }
-    if (this._onKeyDown){
-      this.input.keyboard.off('keydown', this._onKeyDown);
-      this._onKeyDown = null;
     }
 
     this._destroyFixedInputBar();
