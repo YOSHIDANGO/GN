@@ -171,13 +171,13 @@ function toInt(v, d = 0) {
         meta: { turn: turn01, characterId, model }
       });
     } catch (err) {
-      console.error(err);
-      return res.status(200).json({
-        npcText: "今日はちょい通信がご機嫌ナナメかも。もう一回だけ、声聞かせて？",
-        signals: { mood: "soft", distance: 0 },
-        delta: { affinity: 0, interest: 1, irritation: 0 },
-        flags: { forceEnd: false },
-        meta: { fallback: true }
-      });
-    }
+        console.error(err);
+        return res.status(200).json({
+          npcText: "今日はちょい通信がご機嫌ナナメかも。もう一回だけ、声聞かせて？",
+          signals: { mood: "soft", distance: 0 },
+          delta: { affinity: 0, interest: 1, irritation: 0 },
+          flags: { forceEnd: false },
+          meta: { fallback: true, error: String(err?.message || err) }  // ★追加
+        });
+      }
   };
