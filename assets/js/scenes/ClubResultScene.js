@@ -85,28 +85,38 @@ export class ClubResultScene extends Phaser.Scene {
       // 今は特に無し
     }
   
+
     _ensureFieldReady(){
-      // Clubが残ってたら止める（DOMバー残留の保険）
-      if (this.scene.isActive('Club') || this.scene.isPaused('Club')){
+        // ★DOMバー残留を最優先で殺す（シーン状態に依存しない）
+        try{
+        const el = document.getElementById('club-fixed-bar');
+        if (el) el.remove();
+        }catch(_){}
+
+        // Clubが残ってたら止める（保険）
+        if (this.scene.isActive('Club') || this.scene.isPaused('Club')){
         try{ this.scene.stop('Club'); }catch(_){}
-      }
-  
-      // Fieldを起こす
-      if (this.scene.get(this.returnTo)){
+        }
+
+        // Fieldを起こす
+        if (this.scene.get(this.returnTo)){
         if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
         if (!this.scene.isActive(this.returnTo)) this.scene.start(this.returnTo);
+
+        // ★これがないと「見えないField」のままになる
+        this.scene.setVisible(true, this.returnTo);
+
         this.scene.bringToTop(this.returnTo);
-  
-        // modalOpenが残ってると詰むので保険で解除
+
         const f = this.scene.get(this.returnTo);
         if (f){
-          try{
+            try{
             f.modalOpen = false;
             f._pointerConsumed = false;
             f.pendingDoorOutside = false;
-          }catch(_){}
+            }catch(_){}
         }
-      }
+        }
     }
   
     _backToField(){

@@ -276,33 +276,21 @@ export class ClubScene extends Phaser.Scene {
   }
 
   _destroyFixedInputBar(){
+    // ★参照が無くてもDOMが残ってたら先に消す
+    try{
+      const el = document.getElementById('club-fixed-bar');
+      if (el && el !== this._fixedBar) el.remove();
+    }catch(_){}
+  
     if (this._fixedBar){
-      const bar = this._fixedBar;
-      const input = this._fixedInput;
-      const btn = this._fixedSend;
-      const h = this._fixedHandlers;
-
-      try{
-        if (h && bar){
-          bar.removeEventListener('pointerdown', h.stopOnly, true);
-          bar.removeEventListener('touchstart', h.stopOnly, true);
-          bar.removeEventListener('mousedown', h.stopOnly, true);
-        }
-        if (h && input){
-          input.removeEventListener('pointerdown', h.stopOnly, true);
-          input.removeEventListener('touchstart', h.stopOnly, true);
-          input.removeEventListener('mousedown', h.stopOnly, true);
-          input.removeEventListener('keydown', h.onInputKeyDown);
-        }
-        if (h && btn){
-          btn.removeEventListener('pointerdown', h.onBtnPointerDown, true);
-          btn.removeEventListener('click', h.onBtnClick);
-        }
-      }catch(_){}
-
-      bar.remove();
+      // もしイベント解除を握ってるならここで外す
+      // 例: this._fixedHandlers = { onSend, onKeydown } とかなら
+      // this._fixedSend?.removeEventListener('click', this._fixedHandlers.onSend);
+      // this._fixedInput?.removeEventListener('keydown', this._fixedHandlers.onKeydown);
+  
+      this._fixedBar.remove();
     }
-
+  
     this._fixedBar = null;
     this._fixedInput = null;
     this._fixedSend = null;
