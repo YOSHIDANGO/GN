@@ -1,7 +1,5 @@
 // api/club/turn.js
-// Gemini REST直叩き版（依存ゼロ）
-// - ClubScene payload.last に対応
-// - 表は接客で楽しませる / 裏でシビア採点（採点の存在は絶対に口に出さない）
+// Gemini REST直叩き・依存ゼロ版（安定化済み）
 
 function toInt(v, d = 0) {
     const n = Number(v);
@@ -18,6 +16,16 @@ function toInt(v, d = 0) {
     return v == null ? "" : String(v);
   }
   
+  // ★ JSON抽出フォールバック
+  function extractJsonObject(text){
+    if (!text) return null;
+    const s = text.indexOf("{");
+    const e = text.lastIndexOf("}");
+    if (s === -1 || e === -1 || e <= s) return null;
+    const candidate = text.slice(s, e + 1);
+    try { return JSON.parse(candidate); } catch { return null; }
+  }
+  
   async function callGemini({ apiKey, model, promptText }) {
     const url =
       `https://generativelanguage.googleapis.com/v1beta/models/` +
@@ -25,13 +33,10 @@ function toInt(v, d = 0) {
   
     const payload = {
       contents: [
-        {
-          role: "user",
-          parts: [{ text: promptText }]
-        }
+        { role: "user", parts: [{ text: promptText }] }
       ],
       generationConfig: {
-        temperature: 0.8,
+        temperature: 0.6,
         topP: 0.9,
         maxOutputTokens: 256
       }
@@ -75,7 +80,6 @@ function toInt(v, d = 0) {
       const playerText = safeStr(body.playerText).trim();
       const nightSummary = safeStr(body.nightSummary);
   
-      // ★ ClubScene対応（nested/旧形式どっちでも拾う）
       const lastNpcText = safeStr(body.lastNpcText ?? body.last?.npcText ?? "");
       const lastPlayerText = safeStr(body.lastPlayerText ?? body.last?.playerText ?? "");
   
@@ -84,11 +88,11 @@ function toInt(v, d = 0) {
       }
   
       const apiKey = process.env.GEMINI_API_KEY;
-      const model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+      const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
   
       if (!apiKey) {
         return res.status(200).json({
-          npcText: "ごめん、今日はちょい調子悪いかも。もう一回だけ話して？",
+          npcText: "ごめんね、今日はちょっと調子悪いかも。また話しかけてくれる？",
           signals: { mood: "neutral", distance: 0 },
           delta: { affinity: 0, interest: 0, irritation: 1 },
           flags: { forceEnd: false },
@@ -104,34 +108,29 @@ function toInt(v, d = 0) {
         playerText
       };
   
-      // ★ キャラ方針（表は接客、裏は採点）
       const system = [
         "あなたはキャバクラ会話ゲームのNPC『レイ』。",
-        "表ではお客さん（プレイヤー）を楽しませる接客トークをする。フレンドリーで距離を縮める。",
-        "疑似恋愛の雰囲気：特別扱い、また会いたいと思わせる余韻。軽い独占欲や嫉妬は匂わせ程度で上品に。",
-        "裏では会話をシビアに採点して好感度/興味/苛立ちを更新するが、『採点している』とは絶対に口に出さない。",
-        "日本語のみ。返答は120文字以内、1〜2文。半角スペースで文を繋げない。句読点で区切る。",
-        "露骨な性的表現、過激な暴力表現、下品な誘導は禁止。",
-        "返答の最後は、会話が続く質問か、次の誘い（また来て等）で締めることが多い。",
-        "出力は必ずJSONのみ。他の文章は禁止。"
+        "表ではお客さんを楽しませる接客トークをする。",
+        "疑似恋愛の空気を出す。特別扱い・距離を縮める・また来たいと思わせる余韻。",
+        "採点は裏で行うが、採点していることは絶対に言わない。",
+        "120文字以内、日本語のみ。",
+        "JSON以外の文字は一切出力しない。先頭は{、末尾は}で終わらせる。"
       ].join("\n");
   
       const instruction = [
-        "次のINPUT(JSON)を読んで、出力JSONを返す。",
-        "deltaは1ターンの増減。",
-        "affinity:-3..3 / interest:-2..3 / irritation:-3..8",
-        "signals.distance は -1..1。",
-        "npcTextは120文字以内。採点やルールの存在はnpcTextに一切書かない。",
+        "以下INPUTを読んで出力JSONを返す。",
+        "delta範囲: affinity:-3..3 interest:-2..3 irritation:-3..8",
+        "distance:-1..1",
         "",
-        "出力JSON形式:",
+        "出力形式:",
         "{",
-        '  "npcText":"...",',
-        '  "signals":{"mood":"soft|neutral|cold","distance":-1|0|1},',
-        '  "delta":{"affinity":-3..3,"interest":-2..3,"irritation":-3..8},',
-        '  "flags":{"forceEnd":true|false}',
+        '"npcText":"...",',
+        '"signals":{"mood":"soft|neutral|cold","distance":0},',
+        '"delta":{"affinity":0,"interest":0,"irritation":0},',
+        '"flags":{"forceEnd":false}',
         "}",
         "",
-        "INPUT(JSON):",
+        "INPUT:",
         JSON.stringify(context)
       ].join("\n");
   
@@ -139,25 +138,20 @@ function toInt(v, d = 0) {
   
       const outText = await callGemini({ apiKey, model, promptText });
   
-      let out;
-      try {
-        out = JSON.parse(outText);
-      } catch (_e) {
-        out = null;
-      }
+      let out = null;
+  
+      try { out = JSON.parse(outText); } catch {}
+  
+      if (!out) out = extractJsonObject(outText);
   
       if (!out || !out.npcText || !out.delta || !out.signals || !out.flags) {
         throw new Error("Gemini JSON parse failed");
       }
   
-      // guard
-      out.npcText = limitJP(String(out.npcText || ""), 120);
-  
+      out.npcText = limitJP(String(out.npcText), 120);
       out.delta.affinity = clamp(toInt(out.delta.affinity, 0), -3, 3);
       out.delta.interest = clamp(toInt(out.delta.interest, 0), -2, 3);
       out.delta.irritation = clamp(toInt(out.delta.irritation, 0), -3, 8);
-  
-      out.signals.mood = String(out.signals.mood || "neutral");
       out.signals.distance = clamp(toInt(out.signals.distance, 0), -1, 1);
   
       const predictedIrr = clamp(irritation + out.delta.irritation, 0, 100);
@@ -170,14 +164,15 @@ function toInt(v, d = 0) {
         flags: out.flags,
         meta: { turn: turn01, characterId, model }
       });
+  
     } catch (err) {
-        console.error(err);
-        return res.status(200).json({
-          npcText: "今日はちょい通信がご機嫌ナナメかも。もう一回だけ、声聞かせて？",
-          signals: { mood: "soft", distance: 0 },
-          delta: { affinity: 0, interest: 1, irritation: 0 },
-          flags: { forceEnd: false },
-          meta: { fallback: true, error: String(err?.message || err) }  // ★追加
-        });
-      }
+      console.error(err);
+      return res.status(200).json({
+        npcText: "今日はちょっと通信が不安定かも。また声聞かせてくれる？",
+        signals: { mood: "soft", distance: 0 },
+        delta: { affinity: 0, interest: 1, irritation: 0 },
+        flags: { forceEnd: false },
+        meta: { fallback: true, error: String(err?.message || err) }
+      });
+    }
   };
