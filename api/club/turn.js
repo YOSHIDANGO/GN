@@ -88,7 +88,7 @@ function toInt(v, d = 0) {
       }
   
       const apiKey = process.env.GEMINI_API_KEY;
-      const model = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+      const model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
   
       if (!apiKey) {
         return res.status(200).json({
