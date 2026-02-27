@@ -1254,28 +1254,83 @@ export class FieldScene extends Phaser.Scene {
     this._showToast('ボーイ「ここまでの流れ、控えた」');
   }
 
-  _startClubMode(){
+// ==============================
+// Club 起動（キャラ選択）
+// ==============================
+
+_startClubMode(){
     this._saveFieldPos();
   
     this.modalOpen = false;
     this.boyMenu?.setVisible(false);
   
-    const unlocked = Object.keys(this.state?.progress?.cabajoUnlocked || {}).filter(id => this.state.progress.cabajoUnlocked[id]);
+    const unlocked = Object.keys(this.state?.progress?.cabajoUnlocked || {})
+      .filter(id => this.state.progress.cabajoUnlocked[id]);
+  
     const list = ['rei', ...unlocked];
   
-    // 1人しかいないなら選択なしで起動
-    if (list.length <= 1){
-      return this._launchClub('rei');
-    }
-  
-    this._openClubSelectMenu(list);
+    // ★ 先に JSON 定義を確実に読み込む（ここが肝）
+    this._ensureClubCharDefs(list, () => {
+      // 1人しかいないなら選択なしで起動
+      if (list.length <= 1){
+        return this._launchClub('rei');
+      }
+      this._openClubSelectMenu(list);
+    });
   }
   
-// ==============================
-// キャラ選択
-// ==============================
-
-_openClubSelectMenu(list){
+  // ==============================
+  // club_char_*.json を必要分ロード
+  // ==============================
+  _ensureClubCharDefs(list, done){
+    const CHAR_DEF_BASE = 'data/club/';
+  
+    const need = [];
+    for (const id of list){
+      const key = `club_char_${id}`;
+      if (!this.cache.json.get(key)){
+        need.push({ key, url: `${CHAR_DEF_BASE}${id}.json` });
+      }
+    }
+  
+    if (!need.length){
+      done?.();
+      return;
+    }
+  
+    // すでにロード中なら相乗り
+    if (this._clubCharLoading){
+      this._clubCharLoadingCallbacks = this._clubCharLoadingCallbacks || [];
+      this._clubCharLoadingCallbacks.push(done);
+      return;
+    }
+  
+    this._clubCharLoading = true;
+    this._clubCharLoadingCallbacks = [done];
+  
+    need.forEach(({ key, url }) => this.load.json(key, url));
+  
+    const finish = () => {
+      this._clubCharLoading = false;
+      const cbs = this._clubCharLoadingCallbacks || [];
+      this._clubCharLoadingCallbacks = [];
+      cbs.forEach(fn => fn && fn());
+    };
+  
+    this.load.once('complete', finish);
+    this.load.once('loaderror', (file) => {
+      // 1個落ちてもゲームを止めない（そのキャラはデフォルト表示になるだけ）
+      console.warn('club char json loaderror:', file?.key, file?.src);
+    });
+  
+    this.load.start();
+  }
+  
+  // ==============================
+  // キャラ選択 UI
+  // ==============================
+  
+  _openClubSelectMenu(list){
     if (this.clubSelectMenu){
       this.clubSelectMenu.destroy(true);
     }
@@ -1301,8 +1356,6 @@ _openClubSelectMenu(list){
     const gap = 60;
   
     list.forEach((id, i) => {
-  
-      // 名前取得（Clubと同じjsonキー想定）
       const def = this.cache.json.get(`club_char_${id}`) || {};
       const name = def.name || id;
   
