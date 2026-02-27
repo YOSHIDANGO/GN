@@ -1266,12 +1266,10 @@ _startClubMode(){
   
     const unlocked = Object.keys(this.state?.progress?.cabajoUnlocked || {})
       .filter(id => this.state.progress.cabajoUnlocked[id]);
-  
     const list = ['rei', ...unlocked];
   
-    // ★ 先に JSON 定義を確実に読み込む（ここが肝）
+    // ★ 先にJSON定義を必ずキャッシュへ載せる
     this._ensureClubCharDefs(list, () => {
-      // 1人しかいないなら選択なしで起動
       if (list.length <= 1){
         return this._launchClub('rei');
       }
@@ -1298,7 +1296,7 @@ _startClubMode(){
       return;
     }
   
-    // すでにロード中なら相乗り
+    // 多重ロード防止（連打対策）
     if (this._clubCharLoading){
       this._clubCharLoadingCallbacks = this._clubCharLoadingCallbacks || [];
       this._clubCharLoadingCallbacks.push(done);
@@ -1319,16 +1317,11 @@ _startClubMode(){
   
     this.load.once('complete', finish);
     this.load.once('loaderror', (file) => {
-      // 1個落ちてもゲームを止めない（そのキャラはデフォルト表示になるだけ）
       console.warn('club char json loaderror:', file?.key, file?.src);
     });
   
     this.load.start();
   }
-  
-  // ==============================
-  // キャラ選択 UI
-  // ==============================
   
   _openClubSelectMenu(list){
     if (this.clubSelectMenu){
@@ -1342,14 +1335,12 @@ _startClubMode(){
   
     const bg = this.add.rectangle(w/2, h/2, w*0.8, h*0.7, 0x000000, 0.85)
       .setOrigin(0.5);
-  
     container.add(bg);
   
     const title = this.add.text(w/2, h*0.2, "誰を指名する？", {
       fontSize: "28px",
       color: "#ffffff"
     }).setOrigin(0.5);
-  
     container.add(title);
   
     const startY = h*0.3;
@@ -1374,7 +1365,6 @@ _startClubMode(){
       container.add(btn);
     });
   
-    // キャンセル
     const cancel = this.add.text(w/2, h*0.85, "やめる", {
       fontSize: "20px",
       color: "#aaaaaa"
@@ -1384,7 +1374,6 @@ _startClubMode(){
     .on('pointerdown', () => {
       this._closeClubSelectMenu();
     });
-  
     container.add(cancel);
   
     this.clubSelectMenu = container;
