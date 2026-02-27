@@ -1,0 +1,11 @@
+{
+  "name": "ユナ",
+  "portraitKey": "yuna_normal",
+  "bgKey": "bg_shop_inside",
+  "irritation_threshold": 85,
+  "irritation_sensitivity": 0.7,
+  "forgiveness_rate": 3.0,
+  "sexual_tolerance": 0.7,
+  "ego_tolerance": 1.3,
+  "clingy_tolerance": 1.2
+}

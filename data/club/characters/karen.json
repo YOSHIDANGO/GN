@@ -1,0 +1,11 @@
+{
+  "name": "カレン",
+  "portraitKey": "karen_normal",
+  "bgKey": "bg_shop_inside",
+  "irritation_threshold": 60,
+  "irritation_sensitivity": 1.4,
+  "forgiveness_rate": 1.0,
+  "sexual_tolerance": 0.6,
+  "ego_tolerance": 0.5,
+  "clingy_tolerance": 0.4
+}

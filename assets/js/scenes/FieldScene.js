@@ -1257,20 +1257,103 @@ export class FieldScene extends Phaser.Scene {
   _startClubMode(){
     this._saveFieldPos();
   
-    // メニュー閉じ
     this.modalOpen = false;
     this.boyMenu?.setVisible(false);
   
-    // ★ Fieldは「止める＋見えなくする」
+    const unlocked = Object.keys(this.state?.progress?.cabajoUnlocked || {}).filter(id => this.state.progress.cabajoUnlocked[id]);
+    const list = ['rei', ...unlocked];
+  
+    // 1人しかいないなら選択なしで起動
+    if (list.length <= 1){
+      return this._launchClub('rei');
+    }
+  
+    this._openClubSelectMenu(list);
+  }
+  
+// ==============================
+// キャラ選択
+// ==============================
+
+_openClubSelectMenu(list){
+    if (this.clubSelectMenu){
+      this.clubSelectMenu.destroy(true);
+    }
+  
+    const w = this.scale.width;
+    const h = this.scale.height;
+  
+    const container = this.add.container(0,0).setDepth(9999);
+  
+    const bg = this.add.rectangle(w/2, h/2, w*0.8, h*0.7, 0x000000, 0.85)
+      .setOrigin(0.5);
+  
+    container.add(bg);
+  
+    const title = this.add.text(w/2, h*0.2, "誰を指名する？", {
+      fontSize: "28px",
+      color: "#ffffff"
+    }).setOrigin(0.5);
+  
+    container.add(title);
+  
+    const startY = h*0.3;
+    const gap = 60;
+  
+    list.forEach((id, i) => {
+  
+      // 名前取得（Clubと同じjsonキー想定）
+      const def = this.cache.json.get(`club_char_${id}`) || {};
+      const name = def.name || id;
+  
+      const btn = this.add.text(w/2, startY + gap*i, name, {
+        fontSize: "24px",
+        backgroundColor: "#222222",
+        padding: { left: 16, right:16, top:8, bottom:8 }
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => {
+        this._closeClubSelectMenu();
+        this._launchClub(id);
+      });
+  
+      container.add(btn);
+    });
+  
+    // キャンセル
+    const cancel = this.add.text(w/2, h*0.85, "やめる", {
+      fontSize: "20px",
+      color: "#aaaaaa"
+    })
+    .setOrigin(0.5)
+    .setInteractive({ useHandCursor: true })
+    .on('pointerdown', () => {
+      this._closeClubSelectMenu();
+    });
+  
+    container.add(cancel);
+  
+    this.clubSelectMenu = container;
+  }
+  
+  _closeClubSelectMenu(){
+    if (this.clubSelectMenu){
+      this.clubSelectMenu.destroy(true);
+      this.clubSelectMenu = null;
+    }
+  }
+  
+  _launchClub(characterId){
     this.scene.pause('Field');
     this.scene.setVisible(false, 'Field');
   
-    // ★ Clubを起動して最前面へ
     this.scene.launch('Club', {
       returnTo: 'Field',
-      characterId: 'rei',
+      characterId,
       debug: false
     });
+  
     this.scene.bringToTop('Club');
   }
   

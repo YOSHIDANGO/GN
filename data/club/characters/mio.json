@@ -1,0 +1,11 @@
+{
+  "name": "ミオ",
+  "portraitKey": "mio_normal",
+  "bgKey": "bg_shop_inside",
+  "irritation_threshold": 65,
+  "irritation_sensitivity": 1.2,
+  "forgiveness_rate": 1.5,
+  "sexual_tolerance": 0.9,
+  "ego_tolerance": 0.7,
+  "clingy_tolerance": 0.6
+}

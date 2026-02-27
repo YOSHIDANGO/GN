@@ -1,0 +1,11 @@
+{
+  "name": "サキ",
+  "portraitKey": "saki_normal",
+  "bgKey": "bg_shop_inside",
+  "irritation_threshold": 68,
+  "irritation_sensitivity": 1.3,
+  "forgiveness_rate": 1.4,
+  "sexual_tolerance": 0.85,
+  "ego_tolerance": 0.8,
+  "clingy_tolerance": 0.7
+}

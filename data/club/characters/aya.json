@@ -1,0 +1,11 @@
+{
+  "name": "アヤ",
+  "portraitKey": "aya_normal",
+  "bgKey": "bg_shop_inside",
+  "irritation_threshold": 75,
+  "irritation_sensitivity": 1.0,
+  "forgiveness_rate": 2.0,
+  "sexual_tolerance": 0.9,
+  "ego_tolerance": 1.0,
+  "clingy_tolerance": 0.8
+}

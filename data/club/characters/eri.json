@@ -1,0 +1,11 @@
+{
+  "name": "エリ",
+  "portraitKey": "eri_normal",
+  "bgKey": "bg_shop_inside",
+  "irritation_threshold": 80,
+  "irritation_sensitivity": 0.8,
+  "forgiveness_rate": 2.5,
+  "sexual_tolerance": 0.7,
+  "ego_tolerance": 1.2,
+  "clingy_tolerance": 1.1
+}

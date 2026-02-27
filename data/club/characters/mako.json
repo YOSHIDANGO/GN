@@ -1,0 +1,11 @@
+{
+  "name": "マコ",
+  "portraitKey": "mako_normal",
+  "bgKey": "bg_shop_inside",
+  "irritation_threshold": 70,
+  "irritation_sensitivity": 1.1,
+  "forgiveness_rate": 1.8,
+  "sexual_tolerance": 1.0,
+  "ego_tolerance": 0.9,
+  "clingy_tolerance": 0.9
+}
