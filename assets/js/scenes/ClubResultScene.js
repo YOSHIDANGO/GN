@@ -89,35 +89,44 @@ export class ClubResultScene extends Phaser.Scene {
     _ensureFieldReady(){
         // ★DOMバー残留を最優先で殺す（シーン状態に依存しない）
         try{
-        const el = document.getElementById('club-fixed-bar');
-        if (el) el.remove();
+          const el = document.getElementById('club-fixed-bar');
+          if (el) el.remove();
         }catch(_){}
-
+      
         // Clubが残ってたら止める（保険）
-        if (this.scene.isActive('Club') || this.scene.isPaused('Club')){
-        try{ this.scene.stop('Club'); }catch(_){}
+        if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
+          try{ this.scene.stop('Club'); }catch(_){ }
         }
-
+      
+        // Dialogueが残ってても止める（戻り直後のフリーズ対策）
+        if (this.scene.isActive('Dialogue') || this.scene.isPaused('Dialogue') || this.scene.isSleeping('Dialogue')){
+          try{ this.scene.stop('Dialogue'); }catch(_){ }
+        }
+      
         // Fieldを起こす
         if (this.scene.get(this.returnTo)){
-        if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
-        if (!this.scene.isActive(this.returnTo)) this.scene.start(this.returnTo);
-
-        // ★これがないと「見えないField」のままになる
-        this.scene.setVisible(true, this.returnTo);
-
-        this.scene.bringToTop(this.returnTo);
-
-        const f = this.scene.get(this.returnTo);
-        if (f){
+          if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
+          if (!this.scene.isActive(this.returnTo)) this.scene.start(this.returnTo);
+      
+          // ★これがないと「見えないField」のままになる
+          this.scene.setVisible(true, this.returnTo);
+      
+          this.scene.bringToTop(this.returnTo);
+      
+          const f = this.scene.get(this.returnTo);
+          if (f){
             try{
-            f.modalOpen = false;
-            f._pointerConsumed = false;
-            f.pendingDoorOutside = false;
+              f.modalOpen = false;
+              f._pointerConsumed = false;
+              f.pendingDoorOutside = false;
+              f._sceneTransitioning = false;
+              f._resumeReason = '';
+              // ev が止まってたら保険で解除
+              if (f.ev) f.ev.running = false;
             }catch(_){}
+          }
         }
-        }
-    }
+      }
   
     _backToField(){
       this.time.delayedCall(0, () => {

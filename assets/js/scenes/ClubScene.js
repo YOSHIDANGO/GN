@@ -387,8 +387,8 @@ export class ClubScene extends Phaser.Scene {
         return;
       }
 
-      // 10ターン
-      if (this.turn > 10){
+      // 15ターン
+      if (this.turn > 15){
         this._finishNight({ forced:false });
         return;
       }
