@@ -1387,15 +1387,26 @@ _startClubMode(){
   }
   
   _launchClub(characterId){
+    // 既にClub/ClubResultが残ってると init(data) が走らず、
+    // 前回のキャラ（だいたいレイ）のまま再利用されるので先に止める
+    try{
+      if (this.scene.isActive('Club') || this.scene.isSleeping('Club')) this.scene.stop('Club');
+      if (this.scene.isActive('ClubResult') || this.scene.isSleeping('ClubResult')) this.scene.stop('ClubResult');
+    }catch(_){}
+
     this.scene.pause('Field');
     this.scene.setVisible(false, 'Field');
-  
-    this.scene.launch('Club', {
+
+    // 受け側の取り方ゆれ対策で複数キーで渡す
+    const payload = {
       returnTo: 'Field',
       characterId,
+      characterID: characterId,
+      charId: characterId,
       debug: false
-    });
-  
+    };
+
+    this.scene.launch('Club', payload);
     this.scene.bringToTop('Club');
   }
   
