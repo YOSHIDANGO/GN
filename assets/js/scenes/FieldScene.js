@@ -1281,7 +1281,7 @@ _startClubMode(){
   // club_char_*.json を必要分ロード
   // ==============================
   _ensureClubCharDefs(list, done){
-    const CHAR_DEF_BASE = 'data/club/';
+    const CHAR_DEF_BASE = 'data/club/characters/';
   
     const need = [];
     for (const id of list){
