@@ -87,46 +87,66 @@ export class ClubResultScene extends Phaser.Scene {
   
 
     _ensureFieldReady(){
-        // ★DOMバー残留を最優先で殺す（シーン状態に依存しない）
+      // DOMバー残留を最優先で殺す（シーン状態に依存しない）
+      try{
+        const el = document.getElementById('club-fixed-bar');
+        if (el) el.remove();
+      }catch(_){}
+
+      // Club / Dialogue が残ってたら止める（active/paused/sleeping 全対応）
+      const stopIfAlive = (key) => {
         try{
-          const el = document.getElementById('club-fixed-bar');
-          if (el) el.remove();
-        }catch(_){}
-      
-        // Clubが残ってたら止める（保険）
-        if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
-          try{ this.scene.stop('Club'); }catch(_){ }
-        }
-      
-        // Dialogueが残ってても止める（戻り直後のフリーズ対策）
-        if (this.scene.isActive('Dialogue') || this.scene.isPaused('Dialogue') || this.scene.isSleeping('Dialogue')){
-          try{ this.scene.stop('Dialogue'); }catch(_){ }
-        }
-      
-        // Fieldを起こす
-        if (this.scene.get(this.returnTo)){
-          if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
-          if (!this.scene.isActive(this.returnTo)) this.scene.start(this.returnTo);
-      
-          // ★これがないと「見えないField」のままになる
-          this.scene.setVisible(true, this.returnTo);
-      
-          this.scene.bringToTop(this.returnTo);
-      
-          const f = this.scene.get(this.returnTo);
-          if (f){
-            try{
-              f.modalOpen = false;
-              f._pointerConsumed = false;
-              f.pendingDoorOutside = false;
-              f._sceneTransitioning = false;
-              f._resumeReason = '';
-              // ev が止まってたら保険で解除
-              if (f.ev) f.ev.running = false;
-            }catch(_){}
+          if (this.scene.isActive(key) || this.scene.isPaused(key) || this.scene.isSleeping(key)){
+            this.scene.stop(key);
           }
+        }catch(_){}
+      };
+
+      stopIfAlive('Club');
+      stopIfAlive('Dialogue');
+
+      // Fieldを起こす
+      if (this.scene.get(this.returnTo)){
+        if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
+        if (!this.scene.isActive(this.returnTo)) this.scene.start(this.returnTo);
+
+        this.scene.setVisible(true, this.returnTo);
+        this.scene.bringToTop(this.returnTo);
+
+        const f = this.scene.get(this.returnTo);
+        if (f){
+          try{
+            f.modalOpen = false;
+            f._pointerConsumed = false;
+            f.pendingDoorOutside = false;
+            f._sceneTransitioning = false;
+            f._resumeReason = '';
+          }catch(_){}
         }
       }
+    }
+
+
+        // Fieldを起こす
+        if (this.scene.get(this.returnTo)){
+        if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
+        if (!this.scene.isActive(this.returnTo)) this.scene.start(this.returnTo);
+
+        // ★これがないと「見えないField」のままになる
+        this.scene.setVisible(true, this.returnTo);
+
+        this.scene.bringToTop(this.returnTo);
+
+        const f = this.scene.get(this.returnTo);
+        if (f){
+            try{
+            f.modalOpen = false;
+            f._pointerConsumed = false;
+            f.pendingDoorOutside = false;
+            }catch(_){}
+        }
+        }
+    }
   
     _backToField(){
       this.time.delayedCall(0, () => {
@@ -134,15 +154,19 @@ export class ClubResultScene extends Phaser.Scene {
         this.scene.stop('ClubResult');
       });
     }
+
   
     _retry(){
       this.time.delayedCall(0, () => {
+        // まず戻り先と残骸を整える
         this._ensureFieldReady();
-  
+
+        // FieldはResult中にpauseしてるので、もう一回の時は一旦pauseへ戻す
         if (this.scene.get(this.returnTo)) this.scene.pause(this.returnTo);
-  
+
+        // Resultを先に落として、Clubを「start」で確実に作り直す
         this.scene.stop('ClubResult');
-        this.scene.launch('Club', {
+        this.scene.start('Club', {
           returnTo: this.returnTo,
           characterId: this.characterId,
           debug: false
@@ -151,4 +175,3 @@ export class ClubResultScene extends Phaser.Scene {
       });
     }
   }
-  

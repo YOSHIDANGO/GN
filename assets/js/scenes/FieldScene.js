@@ -276,6 +276,15 @@ export class FieldScene extends Phaser.Scene {
 
     this.events.on('resume', () => {
 
+      // ★どこから戻ってきても、入力系のフラグは必ず復帰させる（Club/Result戻りのフリーズ対策）
+      this._sceneTransitioning = false;
+      this.modalOpen = false;
+      this._pointerConsumed = false;
+      if (this.cameras?.main){
+        this.cameras.main.fadeIn(120, 0,0,0);
+      }
+
+
     const reason = this._resumeReason || '';
     this._resumeReason = '';
 
