@@ -127,27 +127,6 @@ export class ClubResultScene extends Phaser.Scene {
     }
 
 
-        // Fieldを起こす
-        if (this.scene.get(this.returnTo)){
-        if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
-        if (!this.scene.isActive(this.returnTo)) this.scene.start(this.returnTo);
-
-        // ★これがないと「見えないField」のままになる
-        this.scene.setVisible(true, this.returnTo);
-
-        this.scene.bringToTop(this.returnTo);
-
-        const f = this.scene.get(this.returnTo);
-        if (f){
-            try{
-            f.modalOpen = false;
-            f._pointerConsumed = false;
-            f.pendingDoorOutside = false;
-            }catch(_){}
-        }
-        }
-    }
-  
     _backToField(){
       this.time.delayedCall(0, () => {
         this._ensureFieldReady();
