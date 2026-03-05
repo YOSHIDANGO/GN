@@ -98,7 +98,7 @@ export class ClubResultScene extends Phaser.Scene {
         try{ this.scene.stop('Club'); }catch(_){ }
         }
 
-        // Dialogue/Battle も残ってると Field 側が固まる
+        // Field復帰後に固まりやすいシーンも保険で止める
         for (const k of ['Dialogue','Battle','BattleUI']){
           if (this.scene.isActive(k) || this.scene.isPaused(k) || this.scene.isSleeping(k)){
             try{ this.scene.stop(k); }catch(_){ }
@@ -139,9 +139,9 @@ export class ClubResultScene extends Phaser.Scene {
   
         if (this.scene.get(this.returnTo)) this.scene.pause(this.returnTo);
   
+        // Clubは必ず作り直す（resume復帰で状態を引きずるのを防ぐ）
+        try{ this.scene.stop('Club'); }catch(_){ }
         this.scene.stop('ClubResult');
-
-        // ★必ず作り直す（sleep復帰だと入力が死ぬことがある）
         this.scene.start('Club', {
           returnTo: this.returnTo,
           characterId: this.characterId,
