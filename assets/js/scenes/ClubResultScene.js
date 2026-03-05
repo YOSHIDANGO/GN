@@ -87,64 +87,61 @@ export class ClubResultScene extends Phaser.Scene {
   
 
     _ensureFieldReady(){
-      // DOMバー残留を最優先で殺す（シーン状態に依存しない）
-      try{
+        // ★DOMバー残留を最優先で殺す（シーン状態に依存しない）
+        try{
         const el = document.getElementById('club-fixed-bar');
         if (el) el.remove();
-      }catch(_){}
-
-      // Club / Dialogue が残ってたら止める（active/paused/sleeping 全対応）
-      const stopIfAlive = (key) => {
-        try{
-          if (this.scene.isActive(key) || this.scene.isPaused(key) || this.scene.isSleeping(key)){
-            this.scene.stop(key);
-          }
         }catch(_){}
-      };
 
-      stopIfAlive('Club');
-      stopIfAlive('Dialogue');
+        // Clubが残ってたら止める（保険）
+        if (this.scene.isActive('Club') || this.scene.isPaused('Club') || this.scene.isSleeping('Club')){
+        try{ this.scene.stop('Club'); }catch(_){ }
+        }
 
-      // Fieldを起こす
-      if (this.scene.get(this.returnTo)){
+        // Dialogue/Battle も残ってると Field 側が固まる
+        for (const k of ['Dialogue','Battle','BattleUI']){
+          if (this.scene.isActive(k) || this.scene.isPaused(k) || this.scene.isSleeping(k)){
+            try{ this.scene.stop(k); }catch(_){ }
+          }
+        }
+
+        // Fieldを起こす
+        if (this.scene.get(this.returnTo)){
         if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
         if (!this.scene.isActive(this.returnTo)) this.scene.start(this.returnTo);
 
+        // ★これがないと「見えないField」のままになる
         this.scene.setVisible(true, this.returnTo);
+
         this.scene.bringToTop(this.returnTo);
 
         const f = this.scene.get(this.returnTo);
         if (f){
-          try{
+            try{
             f.modalOpen = false;
             f._pointerConsumed = false;
             f.pendingDoorOutside = false;
-            f._sceneTransitioning = false;
-            f._resumeReason = '';
-          }catch(_){}
+            }catch(_){}
         }
-      }
+        }
     }
-
-
+  
     _backToField(){
       this.time.delayedCall(0, () => {
         this._ensureFieldReady();
         this.scene.stop('ClubResult');
       });
     }
-
   
     _retry(){
       this.time.delayedCall(0, () => {
-        // まず戻り先と残骸を整える
         this._ensureFieldReady();
-
-        // FieldはResult中にpauseしてるので、もう一回の時は一旦pauseへ戻す
+  
         if (this.scene.get(this.returnTo)) this.scene.pause(this.returnTo);
-
-        // Resultを先に落として、Clubを「start」で確実に作り直す
+  
         this.scene.stop('ClubResult');
+
+        // ★必ず作り直す（sleep復帰だと入力が死ぬことがある）
         this.scene.start('Club', {
           returnTo: this.returnTo,
           characterId: this.characterId,
@@ -154,3 +151,4 @@ export class ClubResultScene extends Phaser.Scene {
       });
     }
   }
+  
