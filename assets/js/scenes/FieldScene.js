@@ -275,21 +275,17 @@ export class FieldScene extends Phaser.Scene {
     this._resumeReason = '';
 
     this.events.on('resume', () => {
-
-      // ★どこから戻ってきても、入力系のフラグは必ず復帰させる（Club/Result戻りのフリーズ対策）
+      // ★クラブ/会話/リザルト復帰後に入力が死なないよう、まずフラグを戻す
       this._sceneTransitioning = false;
       this.modalOpen = false;
       this._pointerConsumed = false;
-      if (this.cameras?.main){
-        this.cameras.main.fadeIn(120, 0,0,0);
-      }
+      this.pendingDoorOutside = false;
 
+      const reason = this._resumeReason || '';
+      this._resumeReason = '';
 
-    const reason = this._resumeReason || '';
-    this._resumeReason = '';
-
-    // ★Dialogueから戻った時だけ、会話後処理を走らせる
-    if (reason !== 'dialogue') return;
+      // ★Dialogueから戻った時だけ、会話後処理を走らせる
+      if (reason !== 'dialogue') return;
 
     if (this.ev && this.ev.running) {
         this.ev.resume();

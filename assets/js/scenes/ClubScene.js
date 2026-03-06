@@ -141,6 +141,10 @@ export class ClubScene extends Phaser.Scene {
     this._renderTurn();
     this._showNpc('いらっしゃい。今日はどうする');
 
+    // ★retry/復帰後の保険
+    this.events.on('wake', () => this._reviveFixedInputBar());
+    this.events.on('resume', () => this._reviveFixedInputBar());
+
     // cleanup
     this.events.once('shutdown', () => this._cleanup());
     this.events.once('destroy', () => this._cleanup());
@@ -305,6 +309,17 @@ export class ClubScene extends Phaser.Scene {
 
     this._fixedInput.style.opacity = enabled ? '1' : '0.6';
     this._fixedSend.style.opacity = enabled ? '1' : '0.6';
+  }
+
+  _reviveFixedInputBar(){
+    this.pending = false;
+    this.ended = false;
+
+    if (!this._fixedBar || !document.body.contains(this._fixedBar)) {
+      this._createFixedInputBar();
+    }
+
+    this._setFixedBarEnabled(true);
   }
 
   // =========================
