@@ -14,7 +14,6 @@ export class ClubScene extends Phaser.Scene {
 
     // 送信中ガード
     this.pending = false;
-    this._abortCtrl = null;
 
     // =========================
     // character def（表示だけに使う）
@@ -92,7 +91,10 @@ export class ClubScene extends Phaser.Scene {
 
     this._createFixedInputBar();
 
-    // Result→Retry 等で Scene が sleep/resume されても入力が復活するように保険
+    // =========================
+    // interaction keys
+
+    // ★Result→Retry などで Scene が sleep/resume されても入力が復活するように保険
     this.events.on('wake', () => this._onWakeOrResume());
     this.events.on('resume', () => this._onWakeOrResume());
 
@@ -155,6 +157,28 @@ export class ClubScene extends Phaser.Scene {
     if (this.keyEsc && Phaser.Input.Keyboard.JustDown(this.keyEsc)){
       this._endAndReturn();
     }
+
+
+  _onWakeOrResume(){
+    // ここが死んでると「送信できない」になる
+    this.pending = false;
+    this.ended = false;
+
+    // DOM入力バーを必ず作り直す（古いイベント/DOM残骸を引き継がない）
+    this._createFixedInputBar();
+    this._setFixedBarEnabled(true);
+
+    // 終了演出が残ってたら消す
+    if (this.endOverlay){ try{ this.endOverlay.destroy(); }catch(_){ } this.endOverlay = null; }
+    if (this.endBoy){ try{ this.endBoy.destroy(); }catch(_){ } this.endBoy = null; }
+    if (this.endBox){ try{ this.endBox.destroy(); }catch(_){ } this.endBox = null; }
+    if (this.endText){ try{ this.endText.destroy(); }catch(_){ } this.endText = null; }
+
+    if (this.ui?.backdrop) this.ui.backdrop.setAlpha(1);
+    if (this.ui?.nameText) this.ui.nameText.setAlpha(1);
+    if (this.ui?.bodyText) this.ui.bodyText.setAlpha(1);
+  }
+
   }
 
   // =========================
@@ -429,12 +453,9 @@ export class ClubScene extends Phaser.Scene {
 
   async _callServer(payload){
     try {
-      const ctrl = new AbortController();
-      this._abortCtrl = ctrl;
       const res = await fetch('/api/club/turn', {
         method: 'POST',
         headers: { 'Content-Type':'application/json' },
-        signal: ctrl.signal,
         body: JSON.stringify(payload)
       });
 
@@ -467,6 +488,7 @@ export class ClubScene extends Phaser.Scene {
       }
 
       return json;
+
     } catch (e){
       return {
         npcText: 'ごめん、聞き取れなかった',
@@ -474,9 +496,6 @@ export class ClubScene extends Phaser.Scene {
         delta: { affinity:0, interest:0, irritation:0 },
         flags: { forceEnd:false }
       };
-    } finally {
-      // 旧シーンからのリクエストが残ってると次回入力が死ぬので確実に切る
-      this._abortCtrl = null;
     }
   }
 
@@ -571,10 +590,6 @@ export class ClubScene extends Phaser.Scene {
   }
 
   _cleanup(){
-    if (this._abortCtrl){
-      try{ this._abortCtrl.abort(); }catch(_){ }
-      this._abortCtrl = null;
-    }
     if (this._onResize){
       this.scale.off('resize', this._onResize);
       this._onResize = null;
