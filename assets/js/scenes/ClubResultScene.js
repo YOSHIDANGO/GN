@@ -72,11 +72,6 @@ export class ClubResultScene extends Phaser.Scene {
       this.btnRetry = mkBtn('もう一回', y1, () => this._retry());
       this.btnBack  = mkBtn('フィールドへ戻る', y2, () => this._backToField());
   
-      // 念のため：Resultが出てる間はFieldを止める（スマホの事故防止）
-      if (this.scene.isActive(this.returnTo)){
-        this.scene.pause(this.returnTo);
-      }
-  
       this.events.once('shutdown', () => this._cleanup());
       this.events.once('destroy', () => this._cleanup());
     }
@@ -84,48 +79,51 @@ export class ClubResultScene extends Phaser.Scene {
     _cleanup(){
       // 今は特に無し
     }
-  
 
     _ensureFieldReady(){
-      // DOMバー残留を最優先で殺す（シーン状態に依存しない）
+      // DOM入力バー残留を最優先で殺す
       try{
         const el = document.getElementById('club-fixed-bar');
         if (el) el.remove();
       }catch(_){}
 
-      // Club / Dialogue が残ってたら止める（active/paused/sleeping 全対応）
-      const stopIfAlive = (key) => {
-        try{
-          if (this.scene.isActive(key) || this.scene.isPaused(key) || this.scene.isSleeping(key)){
-            this.scene.stop(key);
-          }
-        }catch(_){}
-      };
+      // Club / Dialogue が残ってたら止める（保険）
+      for (const k of ['Club','Dialogue']){
+        if (this.scene.isActive(k) || this.scene.isPaused(k) || this.scene.isSleeping(k)){
+          try{ this.scene.stop(k); }catch(_){ }
+        }
+      }
 
-      stopIfAlive('Club');
-      stopIfAlive('Dialogue');
-
-      // Fieldを起こす
+      // Fieldは「再生成しない」で復帰だけ（メニューが消える副作用を避ける）
       if (this.scene.get(this.returnTo)){
+        try{
+          if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
+          this.scene.setVisible(true, this.returnTo);
+          this.scene.bringToTop(this.returnTo);
+        }catch(_){}
+      }
+    }
+
+        // Fieldを起こす
+        if (this.scene.get(this.returnTo)){
         if (this.scene.isPaused(this.returnTo)) this.scene.resume(this.returnTo);
         if (!this.scene.isActive(this.returnTo)) this.scene.start(this.returnTo);
 
+        // ★これがないと「見えないField」のままになる
         this.scene.setVisible(true, this.returnTo);
+
         this.scene.bringToTop(this.returnTo);
 
         const f = this.scene.get(this.returnTo);
         if (f){
-          try{
+            try{
             f.modalOpen = false;
             f._pointerConsumed = false;
             f.pendingDoorOutside = false;
-            f._sceneTransitioning = false;
-            f._resumeReason = '';
-          }catch(_){}
+            }catch(_){}
         }
-      }
+        }
     }
-
 
     _backToField(){
       this.time.delayedCall(0, () => {
@@ -134,16 +132,19 @@ export class ClubResultScene extends Phaser.Scene {
       });
     }
 
-  
     _retry(){
       this.time.delayedCall(0, () => {
-        // まず戻り先と残骸を整える
-        this._ensureFieldReady();
+        // いったんFieldを触らない（pause/resumeで副作用出るので）
+        // Clubを必ず作り直す
+        try{ this.scene.stop('Club'); }catch(_){ }
+        try{ this.scene.stop('Dialogue'); }catch(_){ }
 
-        // FieldはResult中にpauseしてるので、もう一回の時は一旦pauseへ戻す
-        if (this.scene.get(this.returnTo)) this.scene.pause(this.returnTo);
+        // DOM残骸は消す
+        try{
+          const el = document.getElementById('club-fixed-bar');
+          if (el) el.remove();
+        }catch(_){}
 
-        // Resultを先に落として、Clubを「start」で確実に作り直す
         this.scene.stop('ClubResult');
         this.scene.start('Club', {
           returnTo: this.returnTo,
@@ -154,3 +155,4 @@ export class ClubResultScene extends Phaser.Scene {
       });
     }
   }
+  
