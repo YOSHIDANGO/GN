@@ -140,23 +140,6 @@ export class FieldScene extends Phaser.Scene {
     this._sceneTransitioning = false;
     this._initFxLayers();
 
-
-    // ★他シーンから戻ってきた時の固まり対策（遷移フラグ/モーダル残りを潰す）
-    const onResume = () => {
-      try{
-        this.modalOpen = false;
-        this._pointerConsumed = false;
-        this.pendingDoorOutside = false;
-        this._sceneTransitioning = false;
-        this._resumeReason = '';
-        // input が止まってたら戻す
-        if (this.input) this.input.enabled = true;
-      }catch(_){}
-    };
-    this.events.on('wake', onResume);
-    this.events.on('resume', onResume);
-
-
     // 入場フェード（復帰も含めて軽く）
     this.cameras.main.fadeIn(140, 0,0,0);
 
@@ -292,6 +275,15 @@ export class FieldScene extends Phaser.Scene {
     this._resumeReason = '';
 
     this.events.on('resume', () => {
+
+      // ★どこから戻ってきても、入力系のフラグは必ず復帰させる（Club/Result戻りのフリーズ対策）
+      this._sceneTransitioning = false;
+      this.modalOpen = false;
+      this._pointerConsumed = false;
+      if (this.cameras?.main){
+        this.cameras.main.fadeIn(120, 0,0,0);
+      }
+
 
     const reason = this._resumeReason || '';
     this._resumeReason = '';

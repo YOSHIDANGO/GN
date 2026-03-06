@@ -93,13 +93,6 @@ export class ClubScene extends Phaser.Scene {
 
     // =========================
     // interaction keys
-
-    // ★Result→Retry などで Scene が sleep/resume されても入力が復活するように保険
-    this.events.on('wake', () => this._onWakeOrResume());
-    this.events.on('resume', () => this._onWakeOrResume());
-
-    // =========================
-    // interaction keys
     // =========================
     this.keyEsc = this.input.keyboard?.addKey('ESC');
 
@@ -157,28 +150,6 @@ export class ClubScene extends Phaser.Scene {
     if (this.keyEsc && Phaser.Input.Keyboard.JustDown(this.keyEsc)){
       this._endAndReturn();
     }
-
-
-  _onWakeOrResume(){
-    // ここが死んでると「送信できない」になる
-    this.pending = false;
-    this.ended = false;
-
-    // DOM入力バーを必ず作り直す（古いイベント/DOM残骸を引き継がない）
-    this._createFixedInputBar();
-    this._setFixedBarEnabled(true);
-
-    // 終了演出が残ってたら消す
-    if (this.endOverlay){ try{ this.endOverlay.destroy(); }catch(_){ } this.endOverlay = null; }
-    if (this.endBoy){ try{ this.endBoy.destroy(); }catch(_){ } this.endBoy = null; }
-    if (this.endBox){ try{ this.endBox.destroy(); }catch(_){ } this.endBox = null; }
-    if (this.endText){ try{ this.endText.destroy(); }catch(_){ } this.endText = null; }
-
-    if (this.ui?.backdrop) this.ui.backdrop.setAlpha(1);
-    if (this.ui?.nameText) this.ui.nameText.setAlpha(1);
-    if (this.ui?.bodyText) this.ui.bodyText.setAlpha(1);
-  }
-
   }
 
   // =========================
