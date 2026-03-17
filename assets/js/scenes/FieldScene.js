@@ -140,6 +140,33 @@ export class FieldScene extends Phaser.Scene {
     this._sceneTransitioning = false;
     this._initFxLayers();
 
+
+    // ★他シーンから戻ってきた時の固まり対策（遷移フラグ/モーダル残りを潰す）
+    const onResume = () => {
+      try{
+        this.modalOpen = false;
+        this._pointerConsumed = false;
+        this.pendingDoorOutside = false;
+        this._sceneTransitioning = false;
+        // input が止まってたら戻す
+        if (this.input) this.input.enabled = true;
+      }catch(_){}
+
+      // 次フレームでもう一度解除して、復帰直後の取りこぼしを潰す
+      this.time.delayedCall(0, () => {
+        try{
+          this.modalOpen = false;
+          this._pointerConsumed = false;
+          this.pendingDoorOutside = false;
+          this._sceneTransitioning = false;
+          if (this.input) this.input.enabled = true;
+        }catch(_){}
+      });
+    };
+    this.events.on('wake', onResume);
+    this.events.on('resume', onResume);
+
+
     // 入場フェード（復帰も含めて軽く）
     this.cameras.main.fadeIn(140, 0,0,0);
 
@@ -275,17 +302,12 @@ export class FieldScene extends Phaser.Scene {
     this._resumeReason = '';
 
     this.events.on('resume', () => {
-      // ★クラブ/会話/リザルト復帰後に入力が死なないよう、まずフラグを戻す
-      this._sceneTransitioning = false;
-      this.modalOpen = false;
-      this._pointerConsumed = false;
-      this.pendingDoorOutside = false;
 
-      const reason = this._resumeReason || '';
-      this._resumeReason = '';
+    const reason = this._resumeReason || '';
+    this._resumeReason = '';
 
-      // ★Dialogueから戻った時だけ、会話後処理を走らせる
-      if (reason !== 'dialogue') return;
+    // ★Dialogueから戻った時だけ、会話後処理を走らせる
+    if (reason !== 'dialogue') return;
 
     if (this.ev && this.ev.running) {
         this.ev.resume();

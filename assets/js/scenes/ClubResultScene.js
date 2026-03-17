@@ -1,3 +1,4 @@
+// assets/js/scenes/ClubResultScene.js
 export class ClubResultScene extends Phaser.Scene {
   constructor(){
     super('ClubResult');
@@ -38,18 +39,18 @@ export class ClubResultScene extends Phaser.Scene {
       lineSpacing: 10
     }).setOrigin(0.5, 0).setScrollFactor(0);
 
-    const mkBtn = (label, y, onTap) => {
-      const bw = Math.min(520, Math.floor(w * 0.78));
-      const bh = 64;
+    const makeButton = (label, y, onTap) => {
+      const width = Math.min(520, Math.floor(w * 0.78));
+      const height = 64;
 
-      const bg = this.add.rectangle(w / 2, y, bw, bh, 0x121218, 0.92)
+      const bg = this.add.rectangle(w / 2, y, width, height, 0x121218, 0.92)
         .setStrokeStyle(3, 0xffffff, 0.18)
         .setOrigin(0.5, 0.5)
         .setInteractive({ useHandCursor: true })
         .setScrollFactor(0)
         .setDepth(10);
 
-      const tx = this.add.text(w / 2, y, label, {
+      const text = this.add.text(w / 2, y, label, {
         fontSize: '22px',
         color: '#ffffff',
         fontStyle: '700'
@@ -61,93 +62,87 @@ export class ClubResultScene extends Phaser.Scene {
       };
 
       bg.on('pointerdown', fire);
-      tx.setInteractive({ useHandCursor: true }).on('pointerdown', fire);
+      text.setInteractive({ useHandCursor: true }).on('pointerdown', fire);
 
-      return { bg, tx };
+      return { bg, text };
     };
 
     const y1 = Math.floor(h * 0.62);
     const y2 = y1 + 84;
 
-    this.btnRetry = mkBtn('もう一回', y1, () => this._retry());
-    this.btnBack = mkBtn('フィールドへ戻る', y2, () => this._backToField());
+    this.btnRetry = makeButton('もう一回', y1, () => this._retry());
+    this.btnBack = makeButton('フィールドへ戻る', y2, () => this._backToField());
 
     this.events.once('shutdown', () => this._cleanup());
     this.events.once('destroy', () => this._cleanup());
   }
 
   _cleanup(){
-    this._removeFixedBar();
-  }
-
-  _removeFixedBar(){
-    try {
+    try{
       const el = document.getElementById('club-fixed-bar');
       if (el) el.remove();
-    } catch (_){ }
+    }catch(_){}
   }
 
-  _resetFieldFlags(){
-    const field = this.scene.get(this.returnTo);
+  _stopIfRunning(key){
+    try{
+      if (this.scene.get(key) && (
+        this.scene.isActive(key) ||
+        this.scene.isPaused(key) ||
+        this.scene.isSleeping(key)
+      )){
+        this.scene.stop(key);
+      }
+    }catch(_){}
+  }
+
+  _reviveField(){
+    this._cleanup();
+
+    for (const key of ['Club', 'Dialogue', 'Battle', 'BattleUI']){
+      this._stopIfRunning(key);
+    }
+
+    let field = null;
+    try{
+      field = this.scene.get(this.returnTo);
+    }catch(_){}
+
     if (!field) return;
 
-    try {
+    try{
       field.modalOpen = false;
       field._pointerConsumed = false;
       field.pendingDoorOutside = false;
       field._sceneTransitioning = false;
-      field.postDialogueAction = null;
       field._resumeReason = '';
-
       if (field.ev) field.ev.running = false;
-      if (field.talkIcon) field.talkIcon.setVisible(false);
-      if (field.boyMenu?.visible) field._closeBoyMenu?.();
-      if (field.rematchMenu?.visible) field._closeRematchMenu?.();
-    } catch (_){ }
-  }
+      if (field.input) field.input.enabled = true;
+    }catch(_){}
 
-  _stopSceneIfAlive(key){
-    try {
-      if (this.scene.isActive(key) || this.scene.isPaused(key) || this.scene.isSleeping(key)) {
-        this.scene.stop(key);
-      }
-    } catch (_){ }
-  }
-
-  _restoreField(){
-    this._removeFixedBar();
-
-    this._stopSceneIfAlive('Club');
-    this._stopSceneIfAlive('Dialogue');
-    this._stopSceneIfAlive('Battle');
-    this._stopSceneIfAlive('BattleUI');
-
-    if (!this.scene.get(this.returnTo)) return;
-
-    this._resetFieldFlags();
-
-    try {
-      if (this.scene.isPaused(this.returnTo)) {
+    try{
+      if (this.scene.isPaused(this.returnTo)){
         this.scene.resume(this.returnTo);
       }
       this.scene.setVisible(true, this.returnTo);
       this.scene.bringToTop(this.returnTo);
-    } catch (_){ }
+    }catch(_){}
   }
 
   _backToField(){
     this.time.delayedCall(0, () => {
-      this._restoreField();
+      this._reviveField();
       this.scene.stop('ClubResult');
     });
   }
 
   _retry(){
     this.time.delayedCall(0, () => {
-      this._removeFixedBar();
-
-      this._stopSceneIfAlive('Club');
-      this._stopSceneIfAlive('Dialogue');
+      this._cleanup();
+      this._stopIfRunning('Club');
+      this._stopIfRunning('Dialogue');
+      this._stopIfRunning('Battle');
+      this._stopIfRunning('BattleUI');
 
       this.scene.stop('ClubResult');
       this.scene.start('Club', {
