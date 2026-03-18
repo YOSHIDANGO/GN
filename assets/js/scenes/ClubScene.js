@@ -12,6 +12,19 @@ export class ClubScene extends Phaser.Scene {
     this.characterId = data?.characterId || 'rei';
     this.boyKey = data?.boyKey || 'boy_normal';
 
+    // 元シーンはクラブ中は止める
+    this._pausedReturnScene = false;
+    try {
+      if (
+        this.returnTo &&
+        this.scene.get(this.returnTo) &&
+        this.scene.isActive(this.returnTo)
+      ) {
+        this.scene.pause(this.returnTo);
+        this._pausedReturnScene = true;
+      }
+    } catch (_) {}
+
     // 送信中ガード
     this.pending = false;
     this._abortCtrl = null;
@@ -316,6 +329,7 @@ export class ClubScene extends Phaser.Scene {
   _onWakeOrResume(){
     // sleep/resume 復帰時の保険
     this.pending = false;
+    this.ended = false;
 
     if (!this._fixedBar || !document.getElementById('club-fixed-bar')){
       this._createFixedInputBar();
@@ -446,58 +460,89 @@ export class ClubScene extends Phaser.Scene {
     };
   }
 
-  async _callServer(payload){
+async _callServer(payload){
     try {
-      const ctrl = new AbortController();
-      this._abortCtrl = ctrl;
-      const res = await fetch('/api/club/turn', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json' },
-        signal: ctrl.signal,
-        body: JSON.stringify(payload)
-      });
+        if (this._abortCtrl) {
+            try {
+                this._abortCtrl.abort();
+            } catch (_) {}
+        }
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const ctrl = new AbortController();
+        this._abortCtrl = ctrl;
 
-      let json = await res.json();
-      if (!json || typeof json !== 'object') json = {};
+        const res = await fetch('/api/club/turn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: ctrl.signal,
+            body: JSON.stringify(payload)
+        });
 
-      if (typeof json.npcText !== 'string') json.npcText = '……';
+        const rawText = await res.text();
 
-      if (!json.signals || typeof json.signals !== 'object'){
-        json.signals = { mood:'soft', distance:0 };
-      } else {
-        if (typeof json.signals.mood !== 'string') json.signals.mood = 'soft';
-        if (typeof json.signals.distance !== 'number') json.signals.distance = 0;
-      }
+        if (!res.ok) {
+            return {
+                npcText: `[HTTP ${res.status}] ${String(rawText || '').slice(0, 120)}`,
+                signals: { mood: 'neutral', distance: 0 },
+                delta: { affinity: 0, interest: 0, irritation: 0 },
+                flags: { forceEnd: false }
+            };
+        }
 
-      if (!json.delta || typeof json.delta !== 'object'){
-        json.delta = { affinity:0, interest:0, irritation:0 };
-      } else {
-        json.delta.affinity = Number(json.delta.affinity || 0);
-        json.delta.interest = Number(json.delta.interest || 0);
-        json.delta.irritation = Number(json.delta.irritation || 0);
-      }
+        let json;
+        try {
+            json = JSON.parse(rawText);
+        } catch (parseErr) {
+            return {
+                npcText: `[JSON PARSE ERROR] ${String(rawText || '').slice(0, 120)}`,
+                signals: { mood: 'neutral', distance: 0 },
+                delta: { affinity: 0, interest: 0, irritation: 0 },
+                flags: { forceEnd: false }
+            };
+        }
 
-      if (!json.flags || typeof json.flags !== 'object'){
-        json.flags = { forceEnd:false };
-      } else {
-        json.flags.forceEnd = !!json.flags.forceEnd;
-      }
+        if (typeof json.npcText !== 'string') {
+            json.npcText = '……';
+        }
 
-      return json;
-    } catch (e){
-      return {
-        npcText: 'ごめん、聞き取れなかった',
-        signals: { mood:'neutral', distance:0 },
-        delta: { affinity:0, interest:0, irritation:0 },
-        flags: { forceEnd:false }
-      };
+        if (!json.signals || typeof json.signals !== 'object') {
+            json.signals = { mood: 'neutral', distance: 0 };
+        }
+
+        if (!json.delta || typeof json.delta !== 'object') {
+            json.delta = { affinity: 0, interest: 0, irritation: 0 };
+        }
+
+        if (!json.flags || typeof json.flags !== 'object') {
+            json.flags = { forceEnd: false };
+        }
+
+        return json;
+    } catch (e) {
+        let message = 'UNKNOWN ERROR';
+
+        if (e && typeof e === 'object') {
+            if (e.name === 'AbortError') {
+                message = 'ABORT ERROR';
+            } else if (e.message) {
+                message = e.message;
+            } else if (e.name) {
+                message = e.name;
+            }
+        } else if (typeof e === 'string') {
+            message = e;
+        }
+
+        return {
+            npcText: `[REQUEST ERROR] ${String(message).slice(0, 120)}`,
+            signals: { mood: 'neutral', distance: 0 },
+            delta: { affinity: 0, interest: 0, irritation: 0 },
+            flags: { forceEnd: false }
+        };
     } finally {
-      // 旧シーンからのリクエストが残ってると次回入力が死ぬので確実に切る
-      this._abortCtrl = null;
+        this._abortCtrl = null;
     }
-  }
+}
 
   // =========================
   // end flow (boy)
@@ -585,8 +630,14 @@ export class ClubScene extends Phaser.Scene {
   _endAndReturn(){
     this._cleanup();
     this.scene.stop('Club');
-    this.scene.resume(this.returnTo);
-    this.scene.bringToTop(this.returnTo);
+
+    try {
+      if (this._pausedReturnScene && this.scene.isPaused(this.returnTo)) {
+        this.scene.resume(this.returnTo);
+      }
+      this.scene.setVisible(true, this.returnTo);
+      this.scene.bringToTop(this.returnTo);
+    } catch (_) {}
   }
 
   _cleanup(){
