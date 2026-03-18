@@ -12,18 +12,8 @@ export class ClubScene extends Phaser.Scene {
     this.characterId = data?.characterId || 'rei';
     this.boyKey = data?.boyKey || 'boy_normal';
 
-    // 元シーンはクラブ中は止める
-    this._pausedReturnScene = false;
-    try {
-      if (
-        this.returnTo &&
-        this.scene.get(this.returnTo) &&
-        this.scene.isActive(this.returnTo)
-      ) {
-        this.scene.pause(this.returnTo);
-        this._pausedReturnScene = true;
-      }
-    } catch (_) {}
+    this._clearDbg();
+    this._dbg(`Club create returnTo=${this.returnTo} char=${this.characterId}`);
 
     // 送信中ガード
     this.pending = false;
@@ -170,6 +160,54 @@ export class ClubScene extends Phaser.Scene {
     }
   }
 
+  _ensureDebugPanel(){
+    let el = document.getElementById('club-debug-panel');
+    if (!el){
+      el = document.createElement('div');
+      el.id = 'club-debug-panel';
+      el.style.position = 'fixed';
+      el.style.left = '8px';
+      el.style.top = '8px';
+      el.style.zIndex = '100000';
+      el.style.maxWidth = '92vw';
+      el.style.maxHeight = '42vh';
+      el.style.overflow = 'auto';
+      el.style.padding = '8px 10px';
+      el.style.boxSizing = 'border-box';
+      el.style.background = 'rgba(0,0,0,0.82)';
+      el.style.color = '#00ff88';
+      el.style.fontSize = '12px';
+      el.style.lineHeight = '1.4';
+      el.style.whiteSpace = 'pre-wrap';
+      el.style.border = '1px solid rgba(255,255,255,0.25)';
+      el.style.borderRadius = '8px';
+      el.style.pointerEvents = 'none';
+      document.body.appendChild(el);
+    }
+    this._debugPanel = el;
+  }
+
+  _dbg(message){
+    try{
+      this._ensureDebugPanel();
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      const line = `[${hh}:${mm}:${ss}] ${message}`;
+      const prev = this._debugPanel.textContent || '';
+      this._debugPanel.textContent = `${line}\n${prev}`.slice(0, 6000);
+    }catch(_){}
+  }
+
+  _clearDbg(){
+    try{
+      const el = document.getElementById('club-debug-panel');
+      if (el) el.remove();
+      this._debugPanel = null;
+    }catch(_){}
+  }
+
   // =========================
   // fixed input bar helpers
   // =========================
@@ -242,13 +280,27 @@ export class ClubScene extends Phaser.Scene {
     }
 
     const doSend = () => {
-      if (this.ended) return;
-      if (this.pending) return;
+      this._dbg(`doSend start ended=${this.ended} pending=${this.pending}`);
+
+      if (this.ended){
+        this._dbg('doSend blocked: ended');
+        return;
+      }
+      if (this.pending){
+        this._dbg('doSend blocked: pending');
+        return;
+      }
 
       const v = (input.value || '').trim();
-      if (!v) return;
+      this._dbg(`doSend value="${v}"`);
+
+      if (!v){
+        this._dbg('doSend blocked: empty');
+        return;
+      }
 
       input.value = '';
+      this._dbg('doSend -> _submitText');
       this._submitText(v);
       input.blur();
     };
@@ -299,16 +351,11 @@ export class ClubScene extends Phaser.Scene {
       const el = document.getElementById('club-fixed-bar');
       if (el && el !== this._fixedBar) el.remove();
     }catch(_){}
-  
+
     if (this._fixedBar){
-      // もしイベント解除を握ってるならここで外す
-      // 例: this._fixedHandlers = { onSend, onKeydown } とかなら
-      // this._fixedSend?.removeEventListener('click', this._fixedHandlers.onSend);
-      // this._fixedInput?.removeEventListener('keydown', this._fixedHandlers.onKeydown);
-  
       this._fixedBar.remove();
     }
-  
+
     this._fixedBar = null;
     this._fixedInput = null;
     this._fixedSend = null;
@@ -325,8 +372,9 @@ export class ClubScene extends Phaser.Scene {
     this._fixedSend.style.opacity = enabled ? '1' : '0.6';
   }
 
-
   _onWakeOrResume(){
+    this._dbg(`_onWakeOrResume ended=${this.ended} pending=${this.pending}`);
+
     // sleep/resume 復帰時の保険
     this.pending = false;
     this.ended = false;
@@ -387,11 +435,20 @@ export class ClubScene extends Phaser.Scene {
   // turn flow
   // =========================
   async _submitText(text){
-    if (this.ended) return;
-    if (this.pending) return;
+    this._dbg(`_submitText start text="${text}" ended=${this.ended} pending=${this.pending}`);
+
+    if (this.ended){
+      this._dbg('_submitText return: ended');
+      return;
+    }
+    if (this.pending){
+      this._dbg('_submitText return: pending');
+      return;
+    }
 
     this.pending = true;
     this._setFixedBarEnabled(false);
+    this._dbg('_submitText pending=true disabled=true');
 
     try {
       this.lastPlayerText = text;
@@ -433,8 +490,10 @@ export class ClubScene extends Phaser.Scene {
 
     } finally {
       this.pending = false;
+      this._dbg(`_submitText finally ended=${this.ended}`);
       if (!this.ended){
         this._setFixedBarEnabled(true);
+        this._dbg('_submitText re-enable input');
       }
     }
   }
@@ -460,89 +519,99 @@ export class ClubScene extends Phaser.Scene {
     };
   }
 
-async _callServer(payload){
+  async _callServer(payload){
+    this._dbg(`_callServer start turn=${payload?.turn}`);
+
     try {
-        if (this._abortCtrl) {
-            try {
-                this._abortCtrl.abort();
-            } catch (_) {}
-        }
-
-        const ctrl = new AbortController();
-        this._abortCtrl = ctrl;
-
-        const res = await fetch('/api/club/turn', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            signal: ctrl.signal,
-            body: JSON.stringify(payload)
-        });
-
-        const rawText = await res.text();
-
-        if (!res.ok) {
-            return {
-                npcText: `[HTTP ${res.status}] ${String(rawText || '').slice(0, 120)}`,
-                signals: { mood: 'neutral', distance: 0 },
-                delta: { affinity: 0, interest: 0, irritation: 0 },
-                flags: { forceEnd: false }
-            };
-        }
-
-        let json;
+      if (this._abortCtrl) {
         try {
-            json = JSON.parse(rawText);
-        } catch (parseErr) {
-            return {
-                npcText: `[JSON PARSE ERROR] ${String(rawText || '').slice(0, 120)}`,
-                signals: { mood: 'neutral', distance: 0 },
-                delta: { affinity: 0, interest: 0, irritation: 0 },
-                flags: { forceEnd: false }
-            };
-        }
+          this._abortCtrl.abort();
+        } catch (_) {}
+      }
 
-        if (typeof json.npcText !== 'string') {
-            json.npcText = '……';
-        }
+      const ctrl = new AbortController();
+      this._abortCtrl = ctrl;
 
-        if (!json.signals || typeof json.signals !== 'object') {
-            json.signals = { mood: 'neutral', distance: 0 };
-        }
+      const res = await fetch('/api/club/turn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: ctrl.signal,
+        body: JSON.stringify(payload)
+      });
 
-        if (!json.delta || typeof json.delta !== 'object') {
-            json.delta = { affinity: 0, interest: 0, irritation: 0 };
-        }
+      this._dbg(`_callServer response status=${res.status}`);
 
-        if (!json.flags || typeof json.flags !== 'object') {
-            json.flags = { forceEnd: false };
-        }
+      const rawText = await res.text();
+      this._dbg(`_callServer raw=${String(rawText || '').slice(0, 120)}`);
 
-        return json;
-    } catch (e) {
-        let message = 'UNKNOWN ERROR';
-
-        if (e && typeof e === 'object') {
-            if (e.name === 'AbortError') {
-                message = 'ABORT ERROR';
-            } else if (e.message) {
-                message = e.message;
-            } else if (e.name) {
-                message = e.name;
-            }
-        } else if (typeof e === 'string') {
-            message = e;
-        }
-
+      if (!res.ok) {
+        this._dbg(`_callServer HTTP error ${res.status}`);
         return {
-            npcText: `[REQUEST ERROR] ${String(message).slice(0, 120)}`,
-            signals: { mood: 'neutral', distance: 0 },
-            delta: { affinity: 0, interest: 0, irritation: 0 },
-            flags: { forceEnd: false }
+          npcText: `[HTTP ${res.status}] ${String(rawText || '').slice(0, 120)}`,
+          signals: { mood: 'neutral', distance: 0 },
+          delta: { affinity: 0, interest: 0, irritation: 0 },
+          flags: { forceEnd: false }
         };
+      }
+
+      let json;
+      try {
+        json = JSON.parse(rawText);
+      } catch (parseErr) {
+        this._dbg('_callServer JSON parse error');
+        return {
+          npcText: `[JSON PARSE ERROR] ${String(rawText || '').slice(0, 120)}`,
+          signals: { mood: 'neutral', distance: 0 },
+          delta: { affinity: 0, interest: 0, irritation: 0 },
+          flags: { forceEnd: false }
+        };
+      }
+
+      if (typeof json.npcText !== 'string') {
+        json.npcText = '……';
+      }
+
+      if (!json.signals || typeof json.signals !== 'object') {
+        json.signals = { mood: 'neutral', distance: 0 };
+      }
+
+      if (!json.delta || typeof json.delta !== 'object') {
+        json.delta = { affinity: 0, interest: 0, irritation: 0 };
+      }
+
+      if (!json.flags || typeof json.flags !== 'object') {
+        json.flags = { forceEnd: false };
+      }
+
+      this._dbg(`_callServer success npcText=${String(json.npcText || '').slice(0, 60)}`);
+      return json;
+    } catch (e) {
+      let message = 'UNKNOWN ERROR';
+
+      if (e && typeof e === 'object') {
+        if (e.name === 'AbortError') {
+          message = 'ABORT ERROR';
+        } else if (e.message) {
+          message = e.message;
+        } else if (e.name) {
+          message = e.name;
+        }
+      } else if (typeof e === 'string') {
+        message = e;
+      }
+
+      this._dbg(`[REQUEST ERROR] ${String(message).slice(0, 120)}`);
+      return {
+        npcText: `[REQUEST ERROR] ${String(message).slice(0, 120)}`,
+        signals: { mood: 'neutral', distance: 0 },
+        delta: { affinity: 0, interest: 0, irritation: 0 },
+        flags: { forceEnd: false }
+      };
     } finally {
-        this._abortCtrl = null;
+      this._abortCtrl = null;
+      this._dbg('_callServer finally');
     }
-}
+  }
 
   // =========================
   // end flow (boy)
@@ -610,6 +679,8 @@ async _callServer(payload){
       }
 
       this.endOverlay.on('pointerdown', () => {
+        this._dbg('endOverlay pointerdown -> ClubResult');
+
         // ここでClubを確実に止めてからResultへ
         this._cleanup();
         this.scene.stop('Club');
@@ -630,17 +701,13 @@ async _callServer(payload){
   _endAndReturn(){
     this._cleanup();
     this.scene.stop('Club');
-
-    try {
-      if (this._pausedReturnScene && this.scene.isPaused(this.returnTo)) {
-        this.scene.resume(this.returnTo);
-      }
-      this.scene.setVisible(true, this.returnTo);
-      this.scene.bringToTop(this.returnTo);
-    } catch (_) {}
+    this.scene.resume(this.returnTo);
+    this.scene.bringToTop(this.returnTo);
   }
 
   _cleanup(){
+    this._dbg('_cleanup start');
+
     if (this._abortCtrl){
       try{ this._abortCtrl.abort(); }catch(_){ }
       this._abortCtrl = null;
