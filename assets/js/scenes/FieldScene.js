@@ -7,6 +7,7 @@ export class FieldScene extends Phaser.Scene {
   constructor(){ super('Field'); }
 
   create(){
+    this._dbg('Field create start');
     // =========================
     // save init
     // =========================
@@ -144,25 +145,23 @@ export class FieldScene extends Phaser.Scene {
     // ★他シーンから戻ってきた時の固まり対策（遷移フラグ/モーダル残りを潰す）
     const onResume = () => {
       try{
+        this._dbg(`base resume mode=${this.mode} modalOpen=${this.modalOpen} transitioning=${this._sceneTransitioning}`);
         this.modalOpen = false;
         this._pointerConsumed = false;
         this.pendingDoorOutside = false;
         this._sceneTransitioning = false;
-        // input が止まってたら戻す
+        this._resumeReason = '';
         if (this.input) this.input.enabled = true;
-      }catch(_){}
-
-      // 次フレームでもう一度解除して、復帰直後の取りこぼしを潰す
-      this.time.delayedCall(0, () => {
-        try{
-          this.modalOpen = false;
-          this._pointerConsumed = false;
-          this.pendingDoorOutside = false;
-          this._sceneTransitioning = false;
-          if (this.input) this.input.enabled = true;
-        }catch(_){}
-      });
+        if (this.boyMenu){
+          this.boyMenu.setVisible(true);
+          if (typeof this.boyMenu.setActive === 'function') this.boyMenu.setActive(true);
+        }
+        if (this.rematchMenu){
+          this.rematchMenu.setVisible(false);
+        }
+      }catch(_){ }
     };
+    this._baseResumeHandler = onResume;
     this.events.on('wake', onResume);
     this.events.on('resume', onResume);
 
@@ -301,19 +300,18 @@ export class FieldScene extends Phaser.Scene {
     // Dialogueが閉じて Field が resume されたら、次のイベントへ
     this._resumeReason = '';
 
-    this.events.on('resume', () => {
+    this._dialogueResumeHandler = () => {
 
     const reason = this._resumeReason || '';
+    this._dbg(`dialogue resume reason=${reason} mode=${this.mode}`);
     this._resumeReason = '';
 
-    // ★Dialogueから戻った時だけ、会話後処理を走らせる
     if (reason !== 'dialogue') return;
 
     if (this.ev && this.ev.running) {
         this.ev.resume();
     }
 
-    // ★会話後に解禁反映（入店イベント→出現）
     if (this.mode === 'inside'){
         const p = this.state?.progress;
         const id = p?.pendingUnlockEnemyId;
@@ -322,38 +320,39 @@ export class FieldScene extends Phaser.Scene {
         p.pendingUnlockEnemyId = null;
         storeSave(this.state);
 
-        this._spawnNPCs('inside'); // 出現更新
+        this._spawnNPCs('inside');
         this._startNpcWander();
         }
     }
 
-    // ★会話後アクション
     if (this.postDialogueAction){
         const act = this.postDialogueAction;
         this.postDialogueAction = null;
 
         if (act.type === 'boy'){
+        this._dbg('dialogue resume -> open boy menu');
         this._openBoyMenu(act.npc);
         return;
         }
         if (act.type === 'rematch'){
+        this._dbg('dialogue resume -> open rematch menu');
         this._openRematchMenu(act.enemyId);
         return;
         }
     }
 
-    // ★エンディング判定（カレン後）
     if (this.state?.flags?.endingPending){
         this.state.flags.endingPending = false;
         storeSave(this.state);
 
-        // エンディング開始
+        this._dbg('dialogue resume -> ending');
         this.scene.pause();
         this.scene.launch('Ending', { returnTo: 'Title' });
         this.scene.bringToTop('Ending');
         return;
     }
-    });
+    };
+    this.events.on('resume', this._dialogueResumeHandler);
 
 
     // shutdown cleanup
@@ -364,6 +363,9 @@ export class FieldScene extends Phaser.Scene {
       if (this._relayoutRematchMenu) this.scale.off('resize', this._relayoutRematchMenu);
       if (this.ev) this.ev.running = false;
       if (this.toastText) this.toastText.destroy();
+      if (this._baseResumeHandler) this.events.off('resume', this._baseResumeHandler);
+      if (this._baseResumeHandler) this.events.off('wake', this._baseResumeHandler);
+      if (this._dialogueResumeHandler) this.events.off('resume', this._dialogueResumeHandler);
 
       // FX
       if (this._neonPulseTimer) this._neonPulseTimer.remove(false);
@@ -380,6 +382,47 @@ export class FieldScene extends Phaser.Scene {
 
     // 初期表示のFX状態
     this._applyFxVisibilityByMode();
+  }
+
+
+  _ensureDebugPanel(){
+    let el = document.getElementById('club-debug-panel');
+    if (!el){
+      el = document.createElement('div');
+      el.id = 'club-debug-panel';
+      el.style.position = 'fixed';
+      el.style.left = '8px';
+      el.style.top = '8px';
+      el.style.zIndex = '100000';
+      el.style.maxWidth = '92vw';
+      el.style.maxHeight = '42vh';
+      el.style.overflow = 'auto';
+      el.style.padding = '8px 10px';
+      el.style.boxSizing = 'border-box';
+      el.style.background = 'rgba(0,0,0,0.82)';
+      el.style.color = '#00ff88';
+      el.style.fontSize = '12px';
+      el.style.lineHeight = '1.4';
+      el.style.whiteSpace = 'pre-wrap';
+      el.style.border = '1px solid rgba(255,255,255,0.25)';
+      el.style.borderRadius = '8px';
+      el.style.pointerEvents = 'none';
+      document.body.appendChild(el);
+    }
+    this._debugPanel = el;
+  }
+
+  _dbg(message){
+    try{
+      this._ensureDebugPanel();
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      const line = `[${hh}:${mm}:${ss}] [Field] ${message}`;
+      const prev = this._debugPanel.textContent || '';
+      this._debugPanel.textContent = `${line}\n${prev}`.slice(0, 8000);
+    }catch(_){ }
   }
 
   // =========================
