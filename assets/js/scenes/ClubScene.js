@@ -65,7 +65,8 @@ export class ClubScene extends Phaser.Scene {
       this.bg.setScale(Math.max(sx, sy));
     };
 
-    this.ui = new DialogueUI(this);
+    this.ui = null;
+    this._recreateDialogueUi();
 
     this.portrait = this.add.image(0, 0, this.char.portraitKey)
       .setOrigin(0.5, 1)
@@ -212,6 +213,58 @@ export class ClubScene extends Phaser.Scene {
     }catch(_){ }
   }
 
+
+  _recreateDialogueUi(){
+    try{
+      if (this.ui && typeof this.ui.destroy === 'function'){
+        this.ui.destroy(true);
+      }
+    }catch(_){ }
+    this.ui = new DialogueUI(this);
+    this._bringDialogueUiToTop();
+  }
+
+  _dialogueUiLooksBroken(){
+    return !this.ui || !this.ui.bodyText || !this.ui.nameText || !this.ui.backdrop;
+  }
+
+  _bringDialogueUiToTop(){
+    try{
+      if (this.ui?.backdrop){
+        this.ui.backdrop.setDepth(1800);
+        this.children.bringToTop(this.ui.backdrop);
+      }
+      if (this.ui?.nameText){
+        this.ui.nameText.setDepth(1801);
+        this.children.bringToTop(this.ui.nameText);
+      }
+      if (this.ui?.bodyText){
+        this.ui.bodyText.setDepth(1802);
+        this.children.bringToTop(this.ui.bodyText);
+      }
+    }catch(_){ }
+    try{
+      if (this.turnText){
+        this.turnText.setDepth(2000);
+        this.children.bringToTop(this.turnText);
+      }
+      if (this.debug?.text){
+        this.debug.text.setDepth(2001);
+        this.children.bringToTop(this.debug.text);
+      }
+    }catch(_){ }
+  }
+
+  _ensureDialogueUiAlive(source=''){
+    const broken = this._dialogueUiLooksBroken();
+    this._dbg(`_ensureDialogueUiAlive source=${source} broken=${broken}`);
+    if (broken){
+      this._recreateDialogueUi();
+    } else {
+      this._bringDialogueUiToTop();
+    }
+  }
+
   _createFixedInputBar(){
     this._destroyFixedInputBar();
 
@@ -344,6 +397,7 @@ export class ClubScene extends Phaser.Scene {
   _onWakeOrResume(){
     this._dbg(`_onWakeOrResume runId=${this._runId} ended=${this.ended} pending=${this.pending}`);
     this.pending = false;
+    this._ensureDialogueUiAlive('wake/resume');
 
     if (!this._fixedBar || !document.getElementById('club-fixed-bar')){
       this._createFixedInputBar();
@@ -373,8 +427,18 @@ export class ClubScene extends Phaser.Scene {
   _showNpc(text){
     this.lastNpcText = text || '';
     this._dbg(`_showNpc runId=${this._runId} text="${String(this.lastNpcText).slice(0, 60)}"`);
-    this.ui.setName(this.char.name);
-    this.ui.setText(this.lastNpcText);
+    this._ensureDialogueUiAlive('_showNpc');
+    try{
+      this.ui.setName(this.char.name);
+      this.ui.setText(this.lastNpcText);
+      this._bringDialogueUiToTop();
+    }catch(e){
+      this._dbg(`_showNpc recreate after error=${e?.message || e}`);
+      this._recreateDialogueUi();
+      this.ui.setName(this.char.name);
+      this.ui.setText(this.lastNpcText);
+      this._bringDialogueUiToTop();
+    }
   }
 
   _buildNightSummary(){
@@ -422,6 +486,7 @@ export class ClubScene extends Phaser.Scene {
 
       this.turn += 1;
       this._renderTurn();
+      this._ensureDialogueUiAlive('submit');
       this._showNpc(out?.npcText || '……');
 
       const forceEnd = !!out?.flags?.forceEnd;
@@ -664,6 +729,11 @@ export class ClubScene extends Phaser.Scene {
 
     this._destroyFixedInputBar();
     this._offWakeResumeHandlers();
+
+    try{
+      if (this.ui && typeof this.ui.destroy === 'function') this.ui.destroy(true);
+    }catch(_){ }
+    this.ui = null;
 
     if (this.endOverlay){ this.endOverlay.destroy(); this.endOverlay = null; }
     if (this.endBoy){ this.endBoy.destroy(); this.endBoy = null; }

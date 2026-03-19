@@ -145,19 +145,33 @@ export class FieldScene extends Phaser.Scene {
     // ★他シーンから戻ってきた時の固まり対策（遷移フラグ/モーダル残りを潰す）
     const onResume = () => {
       try{
-        this._dbg(`base resume mode=${this.mode} modalOpen=${this.modalOpen} transitioning=${this._sceneTransitioning}`);
+        const reason = this._resumeReason || '';
+        this._dbg(`base resume mode=${this.mode} modalOpen=${this.modalOpen} transitioning=${this._sceneTransitioning} reason=${reason}`);
+
         this.modalOpen = false;
         this._pointerConsumed = false;
         this.pendingDoorOutside = false;
         this._sceneTransitioning = false;
-        this._resumeReason = '';
+
         if (this.input) this.input.enabled = true;
+
         if (this.boyMenu){
-          this.boyMenu.setVisible(true);
-          if (typeof this.boyMenu.setActive === 'function') this.boyMenu.setActive(true);
+          this._dbg('[Field] close boy menu');
+    this.boyMenu.setVisible(false);
+          if (typeof this.boyMenu.setActive === 'function') this.boyMenu.setActive(false);
         }
         if (this.rematchMenu){
           this.rematchMenu.setVisible(false);
+          if (typeof this.rematchMenu.setActive === 'function') this.rematchMenu.setActive(false);
+        }
+
+        for (const key of ['Club', 'ClubResult', 'Battle', 'BattleUI']){
+          try{
+            if (this.scene.get(key) && (this.scene.isActive(key) || this.scene.isPaused(key) || this.scene.isSleeping(key))){
+              this._dbg(`base resume stop lingering ${key}`);
+              this.scene.stop(key);
+            }
+          }catch(_){ }
         }
       }catch(_){ }
     };
@@ -303,7 +317,7 @@ export class FieldScene extends Phaser.Scene {
     this._dialogueResumeHandler = () => {
 
     const reason = this._resumeReason || '';
-    this._dbg(`dialogue resume reason=${reason} mode=${this.mode}`);
+    this._dbg(`dialogue resume reason=${reason} mode=${this.mode} modalOpen=${this.modalOpen} transitioning=${this._sceneTransitioning}`);
     this._resumeReason = '';
 
     if (reason !== 'dialogue') return;
@@ -556,13 +570,18 @@ export class FieldScene extends Phaser.Scene {
   }
 
   _startSceneWithFade(sceneKey, data){
-    if (this._sceneTransitioning) return;
+    if (this._sceneTransitioning){
+      this._dbg(`[Field] startScene blocked transitioning scene=${sceneKey}`);
+      return;
+    }
+    this._dbg(`[Field] startScene scene=${sceneKey} data=${JSON.stringify(data || {})}`);
     this._sceneTransitioning = true;
 
     const dur = 150; // 120〜180
     const cam = this.cameras.main;
 
     cam.once('camerafadeoutcomplete', () => {
+      this._dbg(`[Field] startScene fade complete scene=${sceneKey}`);
       this.scene.start(sceneKey, data);
     });
 
@@ -1302,6 +1321,7 @@ export class FieldScene extends Phaser.Scene {
 
   _openBoyMenu(boyNpc){
     this.modalOpen = true;
+    this._dbg('[Field] open boy menu');
     this.boyMenu.setVisible(true);
     this.boyNpc = boyNpc || null;
     this.boyMenuTitle.setText('ボーイ');
@@ -1309,6 +1329,7 @@ export class FieldScene extends Phaser.Scene {
 
   _closeBoyMenu(){
     this.modalOpen = false;
+    this._dbg('[Field] close boy menu');
     this.boyMenu.setVisible(false);
     this.boyNpc = null;
   }
@@ -1711,7 +1732,15 @@ _startClubMode(){
 
       spr.setInteractive({ useHandCursor:true });
       spr.on('pointerdown', (pointer)=>{
-        if (this.modalOpen) return;
+        this._dbg(`[Field] npc pointerdown id=${spr.npcId} enemy=${spr.enemyId || ''} modalOpen=${this.modalOpen} transitioning=${this._sceneTransitioning} boyVisible=${!!this.boyMenu?.visible}`);
+        if (this.modalOpen){
+          this._dbg(`[Field] npc pointerdown blocked modalOpen id=${spr.npcId}`);
+          return;
+        }
+        if (this._sceneTransitioning){
+          this._dbg(`[Field] npc pointerdown blocked transitioning id=${spr.npcId}`);
+          return;
+        }
 
         // ★通常移動クリックを潰す（保険）
         this._pointerConsumed = true;
@@ -1733,6 +1762,7 @@ _startClubMode(){
         const isBoy = (spr.npcId === 'boy_1' || spr.npcId === 'boy_2');
         if (this.mode === 'inside' && isBoy){
           // ★会話 → 会話後にメニュー
+          this._dbg(`[Field] npc boy dialogue id=${spr.npcId}`);
           this.postDialogueAction = { type:'boy', npc:spr };
           this._launchDialogue(spr.scriptKey, 'bg_shop_inside');
           return;
@@ -1748,6 +1778,7 @@ _startClubMode(){
             this.postDialogueAction = { type:'rematch', enemyId:spr.enemyId };
 
             // ★resume理由をセット
+            this._dbg(`[Field] npc rematch dialogue enemy=${spr.enemyId}`);
             this._resumeReason = 'dialogue';
             this.scene.pause();
             this.scene.launch('Dialogue', {
@@ -1760,11 +1791,13 @@ _startClubMode(){
           }
 
           // unlocked & 未撃破なら戦闘（フェード）
+          this._dbg(`[Field] npc start battle enemy=${spr.enemyId}`);
           this._startSceneWithFade('Battle', { type:'cabajo', id: spr.enemyId });
           return;
         }
 
         // 通常：会話
+        this._dbg(`[Field] npc normal dialogue id=${spr.npcId}`);
         this._resumeReason = 'dialogue';
         this.scene.pause();
         this.scene.launch('Dialogue', {
@@ -2079,6 +2112,7 @@ _startClubMode(){
       if (this.mode === 'outside'){
         if (addSteps(this.counter, moved)){
           const guestId = pickGuestId();
+          this._dbg(`[Field] encounter guest id=${guestId} moved=${moved}`);
           this._saveFieldPos();
           this._startSceneWithFade('Battle', { type:'guest', id: guestId });
           return;
@@ -2144,6 +2178,7 @@ _startClubMode(){
 
       // PC保険（F）
       if (Phaser.Input.Keyboard.JustDown(this.keys.F)){
+        this._dbg(`[Field] try talk npcId=${nearest.npcId} enemy=${nearest.enemyId || ''} best=${best} modalOpen=${this.modalOpen} transitioning=${this._sceneTransitioning} boyVisible=${!!this.boyMenu?.visible}`);
         const isBoy = (nearest.npcId === 'boy_1' || nearest.npcId === 'boy_2');
         if (this.mode === 'inside' && isBoy){
           // ★会話 → 会話後にメニュー
@@ -2161,6 +2196,7 @@ _startClubMode(){
             this.postDialogueAction = { type:'rematch', enemyId:nearest.enemyId };
 
             // ★resume理由をセット
+            this._dbg(`[Field] npc rematch dialogue enemy=${spr.enemyId}`);
             this._resumeReason = 'dialogue';
             this.scene.pause();
             this.scene.launch('Dialogue', {
@@ -2176,6 +2212,7 @@ _startClubMode(){
           return;
         }
 
+        this._dbg(`[Field] npc normal dialogue id=${spr.npcId}`);
         this._resumeReason = 'dialogue';
         this.scene.pause();
         this.scene.launch('Dialogue', {
