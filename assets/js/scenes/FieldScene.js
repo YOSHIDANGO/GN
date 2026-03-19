@@ -772,10 +772,26 @@ export class FieldScene extends Phaser.Scene {
     this.ev.run();
   }
 
+  _stopDialogueIfNeeded(){
+    try{
+      if (this.scene.get('Dialogue') && (
+        this.scene.isActive('Dialogue') ||
+        this.scene.isPaused('Dialogue') ||
+        this.scene.isSleeping('Dialogue')
+      )){
+        this._dbg('[Field] force stop lingering Dialogue');
+        this.scene.stop('Dialogue');
+      }
+    }catch(e){
+      this._dbg('[Field] force stop Dialogue error=' + (e?.message || e));
+    }
+  }
+
   _launchDialogue(scriptKey, bgKey){
     // ★resumeがDialogue由来だと分かるように印を付ける
     this._resumeReason = 'dialogue';
-  
+
+    this._stopDialogueIfNeeded();
     this.scene.pause();
     this.scene.launch('Dialogue', {
       scriptKey,
@@ -1777,16 +1793,9 @@ _startClubMode(){
             // ★会話 → 会話後に再戦メニュー
             this.postDialogueAction = { type:'rematch', enemyId:spr.enemyId };
 
-            // ★resume理由をセット
+            // ★会話 → 会話後に再戦メニュー
             this._dbg(`[Field] npc rematch dialogue enemy=${spr.enemyId}`);
-            this._resumeReason = 'dialogue';
-            this.scene.pause();
-            this.scene.launch('Dialogue', {
-              scriptKey: `npc_cabajo_after_${spr.enemyId}`,
-              returnTo: 'Field',
-              bgKey: 'bg_shop_inside'
-            });
-            this.scene.bringToTop('Dialogue');
+            this._launchDialogue(`npc_cabajo_after_${spr.enemyId}`, 'bg_shop_inside');
             return;
           }
 
@@ -1798,14 +1807,7 @@ _startClubMode(){
 
         // 通常：会話
         this._dbg(`[Field] npc normal dialogue id=${spr.npcId}`);
-        this._resumeReason = 'dialogue';
-        this.scene.pause();
-        this.scene.launch('Dialogue', {
-          scriptKey: spr.scriptKey,
-          returnTo: 'Field',
-          bgKey: (this.mode === 'inside') ? 'bg_shop_inside' : 'bg_susukino_night_01'
-        });
-        this.scene.bringToTop('Dialogue');
+        this._launchDialogue(spr.scriptKey, (this.mode === 'inside') ? 'bg_shop_inside' : 'bg_susukino_night_01');
       });
 
       this.npcs.push(spr);
@@ -2195,16 +2197,8 @@ _startClubMode(){
             // ★会話 → 会話後に再戦メニュー
             this.postDialogueAction = { type:'rematch', enemyId:nearest.enemyId };
 
-            // ★resume理由をセット
-            this._dbg(`[Field] npc rematch dialogue enemy=${spr.enemyId}`);
-            this._resumeReason = 'dialogue';
-            this.scene.pause();
-            this.scene.launch('Dialogue', {
-              scriptKey: `npc_cabajo_after_${nearest.enemyId}`,
-              returnTo: 'Field',
-              bgKey: 'bg_shop_inside'
-            });
-            this.scene.bringToTop('Dialogue');
+            this._dbg(`[Field] npc rematch dialogue enemy=${nearest.enemyId}`);
+            this._launchDialogue(`npc_cabajo_after_${nearest.enemyId}`, 'bg_shop_inside');
             return;
           }
 
@@ -2212,15 +2206,8 @@ _startClubMode(){
           return;
         }
 
-        this._dbg(`[Field] npc normal dialogue id=${spr.npcId}`);
-        this._resumeReason = 'dialogue';
-        this.scene.pause();
-        this.scene.launch('Dialogue', {
-          scriptKey: nearest.scriptKey,
-          returnTo: 'Field',
-          bgKey: (this.mode === 'inside') ? 'bg_shop_inside' : 'bg_susukino_night_01'
-        });
-        this.scene.bringToTop('Dialogue');
+        this._dbg(`[Field] npc normal dialogue id=${nearest.npcId}`);
+        this._launchDialogue(nearest.scriptKey, (this.mode === 'inside') ? 'bg_shop_inside' : 'bg_susukino_night_01');
         return;
       }
     } else {
