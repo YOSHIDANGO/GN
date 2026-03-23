@@ -785,15 +785,6 @@ export class FieldScene extends Phaser.Scene {
     }catch(e){
       this._dbg('[Field] force stop Dialogue error=' + (e?.message || e));
     }
-
-    try{
-      if (this.scene.get('Dialogue')){
-        this.scene.remove('Dialogue');
-        this._dbg('[Field] removed Dialogue');
-      }
-    }catch(e){
-      this._dbg('[Field] remove Dialogue error=' + (e?.message || e));
-    }
   }
 
   _launchDialogue(scriptKey, bgKey){
@@ -807,6 +798,7 @@ export class FieldScene extends Phaser.Scene {
       this.scene.pause();
       this._dbg('[Field] _launchDialogue paused Field');
 
+      this._dbg('[Field] _launchDialogue launching Dialogue');
       this.scene.launch('Dialogue', {
         scriptKey,
         returnTo: 'Field',

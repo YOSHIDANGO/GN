@@ -2,12 +2,21 @@
 import { DialogueUI } from '../ui/DialogueUI.js';
 
 export class DialogueScene extends Phaser.Scene {
-  constructor(){ super('Dialogue'); }
+  constructor(){
+    super('Dialogue');
+  }
 
   create(data){
     this.returnTo = data?.returnTo || 'Field';
-    const scriptKey = data?.scriptKey || 'story_opening';
-    const script = this.cache.json.get(scriptKey) || {};
+    this.scriptKey = data?.scriptKey || 'story_opening';
+
+    const script = this.cache.json.get(this.scriptKey) || {};
+    this.lines = Array.isArray(script.lines) ? script.lines : [];
+    this.idx = 0;
+    this.charas = [];
+    this.tapLayer = null;
+    this._onResizeTap = null;
+    this._ended = false;
 
     this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
 
@@ -19,18 +28,12 @@ export class DialogueScene extends Phaser.Scene {
 
     this.ui = new DialogueUI(this);
 
-    this.lines = Array.isArray(script.lines) ? script.lines : [];
-    this.idx = 0;
+    this.keySpace = this.input.keyboard?.addKey('SPACE') || null;
+    this.keyEsc   = this.input.keyboard?.addKey('ESC') || null;
 
-    this.charas = [];
-
-    this.keySpace = this.input.keyboard.addKey('SPACE');
-    this.keyEsc   = this.input.keyboard.addKey('ESC');
-
-    // ★ここが大事：下のシーンに入力落とさない
+    // 下のシーンに入力を落とさない
     this.input.setTopOnly(true);
 
-    // ★全画面タップレイヤ（透明）
     const makeTapLayer = () => {
       const w = this.scale.width;
       const h = this.scale.height;
@@ -40,15 +43,14 @@ export class DialogueScene extends Phaser.Scene {
         this.tapLayer = null;
       }
 
-      this.tapLayer = this.add.zone(w/2, h/2, w, h)
+      this.tapLayer = this.add.zone(w / 2, h / 2, w, h)
         .setOrigin(0.5)
         .setScrollFactor(0)
         .setDepth(99999)
-        .setInteractive({ useHandCursor:false });
+        .setInteractive({ useHandCursor: false });
 
-      this.tapLayer.on('pointerdown', (pointer)=>{
-        // ネイティブイベントも止めておくと堅い
-        pointer.event?.stopPropagation?.();
+      this.tapLayer.on('pointerdown', (pointer) => {
+        pointer?.event?.stopPropagation?.();
         this._next();
       });
     };
@@ -60,16 +62,35 @@ export class DialogueScene extends Phaser.Scene {
     };
     this.scale.on('resize', this._onResizeTap);
 
+    this.events.once('shutdown', () => this._cleanup());
+    this.events.once('destroy', () => this._cleanup());
+
+    if (!this.lines.length){
+      this._setFallbackMessage(`会話データが見つからない: ${this.scriptKey}`);
+      return;
+    }
+
     this._show();
   }
 
   update(){
-    if (Phaser.Input.Keyboard.JustDown(this.keySpace)) this._next();
-    if (Phaser.Input.Keyboard.JustDown(this.keyEsc)) this._end();
+    if (this.keySpace && Phaser.Input.Keyboard.JustDown(this.keySpace)) this._next();
+    if (this.keyEsc && Phaser.Input.Keyboard.JustDown(this.keyEsc)) this._end();
+  }
+
+  _setFallbackMessage(message){
+    this.bg.setVisible(false);
+    this._clearCharas();
+    if (this.ui){
+      this.ui.setName('SYSTEM');
+      this.ui.setText(message || '会話データを読み込めなかった');
+    }
   }
 
   _clearCharas(){
-    for (const c of this.charas) c.destroy();
+    for (const c of this.charas){
+      try{ c.destroy(); }catch(_){ }
+    }
     this.charas = [];
   }
 
@@ -109,7 +130,10 @@ export class DialogueScene extends Phaser.Scene {
 
   _show(){
     const line = this.lines[this.idx];
-    if (!line){ this._end(); return; }
+    if (!line){
+      this._end();
+      return;
+    }
 
     const hasChara = !!(line.chars || line.charaKey);
     this.bg.setVisible(hasChara);
@@ -132,20 +156,51 @@ export class DialogueScene extends Phaser.Scene {
   }
 
   _next(){
+    if (!this.lines.length){
+      this._end();
+      return;
+    }
+
     this.idx += 1;
     this._show();
   }
 
-  _end(){
-    this._clearCharas();
-
-    // ★リサイズ監視解除
+  _cleanup(){
     if (this._onResizeTap){
       this.scale.off('resize', this._onResizeTap);
       this._onResizeTap = null;
     }
 
-    this.scene.stop('Dialogue');
-    this.scene.resume(this.returnTo);
+    if (this.tapLayer){
+      try{ this.tapLayer.destroy(); }catch(_){ }
+      this.tapLayer = null;
+    }
+
+    this._clearCharas();
+
+    if (this.ui){
+      try{
+        if (typeof this.ui.destroy === 'function') this.ui.destroy();
+      }catch(_){ }
+      this.ui = null;
+    }
+
+    this.keySpace = null;
+    this.keyEsc = null;
+  }
+
+  _end(){
+    if (this._ended) return;
+    this._ended = true;
+
+    this._cleanup();
+
+    try{
+      this.scene.stop('Dialogue');
+    }catch(_){ }
+
+    try{
+      this.scene.resume(this.returnTo);
+    }catch(_){ }
   }
 }
