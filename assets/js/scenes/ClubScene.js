@@ -21,7 +21,8 @@ export class ClubScene extends Phaser.Scene {
 
     this._offWakeResumeHandlers();
     this._destroyFixedInputBar();
-    this._clearDbg();
+    this._removeDebugPanel();
+    this._removeDebugPanel();
 
     // =========================
     // character def（表示だけに使う）
@@ -152,52 +153,14 @@ export class ClubScene extends Phaser.Scene {
     }
   }
 
-  _ensureDebugPanel(){
-    let el = document.getElementById('club-debug-panel');
-    if (!el){
-      el = document.createElement('div');
-      el.id = 'club-debug-panel';
-      el.style.position = 'fixed';
-      el.style.left = '8px';
-      el.style.top = '8px';
-      el.style.zIndex = '100000';
-      el.style.maxWidth = '92vw';
-      el.style.maxHeight = '42vh';
-      el.style.overflow = 'auto';
-      el.style.padding = '8px 10px';
-      el.style.boxSizing = 'border-box';
-      el.style.background = 'rgba(0,0,0,0.82)';
-      el.style.color = '#00ff88';
-      el.style.fontSize = '12px';
-      el.style.lineHeight = '1.4';
-      el.style.whiteSpace = 'pre-wrap';
-      el.style.border = '1px solid rgba(255,255,255,0.25)';
-      el.style.borderRadius = '8px';
-      el.style.pointerEvents = 'none';
-      document.body.appendChild(el);
-    }
-    this._debugPanel = el;
-  }
+  _dbg(_message){ }
 
-  _dbg(message){
-    try{
-      this._ensureDebugPanel();
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      const ss = String(now.getSeconds()).padStart(2, '0');
-      const line = `[${hh}:${mm}:${ss}] ${message}`;
-      const prev = this._debugPanel.textContent || '';
-      this._debugPanel.textContent = `${line}\n${prev}`.slice(0, 8000);
-    }catch(_){ }
-  }
-
-  _clearDbg(){
+  _removeDebugPanel(){
     try{
       const el = document.getElementById('club-debug-panel');
       if (el) el.remove();
-      this._debugPanel = null;
     }catch(_){ }
+    this._debugPanel = null;
   }
 
   _offWakeResumeHandlers(){
@@ -424,8 +387,8 @@ export class ClubScene extends Phaser.Scene {
     }
   }
 
-  _showNpc(text){
-    this.lastNpcText = text || '';
+  _formatNpcText(text){\n    const src = String(text || '').replace(/\r\n/g, '\n').trim();\n    if (!src) return '';\n\n    const normalized = src.replace(/\n{3,}/g, '\n\n');\n    const parts = normalized.split(/\n+/);\n    const maxChars = 22;\n    const wrapped = [];\n\n    const wrapChunk = (chunk) => {\n      const chars = Array.from(chunk || '');\n      let line = '';\n      for (const ch of chars){\n        line += ch;\n        if (line.length >= maxChars){\n          wrapped.push(line);\n          line = '';\n        } else if ('。！？!?'.includes(ch) && line.length >= 10){\n          wrapped.push(line);\n          line = '';\n        }\n      }\n      if (line) wrapped.push(line);\n    };\n\n    for (let i = 0; i < parts.length; i += 1){\n      wrapChunk(parts[i]);\n      if (i < parts.length - 1){\n        wrapped.push('');\n      }\n    }\n\n    return wrapped.join('\\n');\n  }\n\n  _showNpc(text){
+    this.lastNpcText = this._formatNpcText(text || '');
     this._dbg(`_showNpc runId=${this._runId} text="${String(this.lastNpcText).slice(0, 60)}"`);
     this._ensureDialogueUiAlive('_showNpc');
     try{

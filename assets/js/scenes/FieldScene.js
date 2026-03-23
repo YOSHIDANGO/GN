@@ -7,7 +7,7 @@ export class FieldScene extends Phaser.Scene {
   constructor(){ super('Field'); }
 
   create(){
-    this._dbg('Field create start');
+    try{ const el = document.getElementById('club-debug-panel'); if (el) el.remove(); }catch(_){ }
     // =========================
     // save init
     // =========================
