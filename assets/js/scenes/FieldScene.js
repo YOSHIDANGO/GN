@@ -788,17 +788,30 @@ export class FieldScene extends Phaser.Scene {
   }
 
   _launchDialogue(scriptKey, bgKey){
+    this._dbg(`[Field] _launchDialogue start scriptKey=${scriptKey} mode=${this.mode}`);
+
     // ★resumeがDialogue由来だと分かるように印を付ける
     this._resumeReason = 'dialogue';
 
-    this._stopDialogueIfNeeded();
-    this.scene.pause();
-    this.scene.launch('Dialogue', {
-      scriptKey,
-      returnTo: 'Field',
-      bgKey: bgKey || ((this.mode === 'inside') ? 'bg_shop_inside' : 'bg_susukino_night_01')
-    });
-    this.scene.bringToTop('Dialogue');
+    try{
+      this._stopDialogueIfNeeded();
+
+      this.scene.pause();
+      this._dbg('[Field] _launchDialogue paused Field');
+
+      this.scene.launch('Dialogue', {
+        scriptKey,
+        returnTo: 'Field',
+        bgKey: bgKey || ((this.mode === 'inside') ? 'bg_shop_inside' : 'bg_susukino_night_01')
+      });
+      this._dbg('[Field] _launchDialogue launched Dialogue');
+
+      this.scene.bringToTop('Dialogue');
+      this._dbg('[Field] _launchDialogue bringToTop Dialogue');
+    }catch(e){
+      this._dbg('[Field] _launchDialogue error=' + (e?.message || e));
+      try{ this.scene.resume(); }catch(_){ }
+    }
   }
   
 
