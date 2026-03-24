@@ -21,8 +21,7 @@ export class ClubScene extends Phaser.Scene {
 
     this._offWakeResumeHandlers();
     this._destroyFixedInputBar();
-    this._removeDebugPanel();
-    this._removeDebugPanel();
+    this._clearDbg();
 
     // =========================
     // character def（表示だけに使う）
@@ -153,14 +152,16 @@ export class ClubScene extends Phaser.Scene {
     }
   }
 
-  _dbg(_message){ }
+  _ensureDebugPanel(){}
 
-  _removeDebugPanel(){
+  _dbg(message){}
+
+  _clearDbg(){
     try{
       const el = document.getElementById('club-debug-panel');
       if (el) el.remove();
+      this._debugPanel = null;
     }catch(_){ }
-    this._debugPanel = null;
   }
 
   _offWakeResumeHandlers(){
@@ -387,7 +388,49 @@ export class ClubScene extends Phaser.Scene {
     }
   }
 
-  _formatNpcText(text){\n    const src = String(text || '').replace(/\r\n/g, '\n').trim();\n    if (!src) return '';\n\n    const normalized = src.replace(/\n{3,}/g, '\n\n');\n    const parts = normalized.split(/\n+/);\n    const maxChars = 22;\n    const wrapped = [];\n\n    const wrapChunk = (chunk) => {\n      const chars = Array.from(chunk || '');\n      let line = '';\n      for (const ch of chars){\n        line += ch;\n        if (line.length >= maxChars){\n          wrapped.push(line);\n          line = '';\n        } else if ('。！？!?'.includes(ch) && line.length >= 10){\n          wrapped.push(line);\n          line = '';\n        }\n      }\n      if (line) wrapped.push(line);\n    };\n\n    for (let i = 0; i < parts.length; i += 1){\n      wrapChunk(parts[i]);\n      if (i < parts.length - 1){\n        wrapped.push('');\n      }\n    }\n\n    return wrapped.join('\\n');\n  }\n\n  _showNpc(text){
+  _formatNpcText(text){
+    const src = String(text || '').replace(/\r\n/g, '\n').trim();
+    if (!src) return '';
+
+    const normalized = src.replace(/\n{3,}/g, '\n\n');
+    const parts = normalized.split(/\n+/);
+    const maxChars = 22;
+    const wrapped = [];
+
+    const wrapChunk = (chunk) => {
+      const chars = Array.from(chunk || '');
+      let line = '';
+
+      for (const ch of chars){
+        line += ch;
+
+        if ('。！？!?'.includes(ch) && line.length >= 6){
+          wrapped.push(line);
+          line = '';
+          continue;
+        }
+
+        if (line.length >= maxChars){
+          wrapped.push(line);
+          line = '';
+        }
+      }
+
+      if (line) wrapped.push(line);
+    };
+
+    for (let i = 0; i < parts.length; i += 1){
+      wrapChunk(parts[i]);
+      if (i < parts.length - 1){
+        wrapped.push('');
+      }
+    }
+
+    return wrapped.join('\n');
+  }
+
+
+  _showNpc(text){
     this.lastNpcText = this._formatNpcText(text || '');
     this._dbg(`_showNpc runId=${this._runId} text="${String(this.lastNpcText).slice(0, 60)}"`);
     this._ensureDialogueUiAlive('_showNpc');

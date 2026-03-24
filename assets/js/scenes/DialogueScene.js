@@ -82,7 +82,7 @@ export class DialogueScene extends Phaser.Scene {
     this.bg.setVisible(false);
     this._clearCharas();
     if (this.ui){
-      this.ui.setName('システム');
+      this.ui.setName('SYSTEM');
       this.ui.setText(message || '会話データを読み込めなかった');
     }
   }

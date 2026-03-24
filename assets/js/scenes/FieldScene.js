@@ -8,6 +8,7 @@ export class FieldScene extends Phaser.Scene {
 
   create(){
     try{ const el = document.getElementById('club-debug-panel'); if (el) el.remove(); }catch(_){ }
+    this._dbg('Field create start');
     // =========================
     // save init
     // =========================
@@ -399,45 +400,9 @@ export class FieldScene extends Phaser.Scene {
   }
 
 
-  _ensureDebugPanel(){
-    let el = document.getElementById('club-debug-panel');
-    if (!el){
-      el = document.createElement('div');
-      el.id = 'club-debug-panel';
-      el.style.position = 'fixed';
-      el.style.left = '8px';
-      el.style.top = '8px';
-      el.style.zIndex = '100000';
-      el.style.maxWidth = '92vw';
-      el.style.maxHeight = '42vh';
-      el.style.overflow = 'auto';
-      el.style.padding = '8px 10px';
-      el.style.boxSizing = 'border-box';
-      el.style.background = 'rgba(0,0,0,0.82)';
-      el.style.color = '#00ff88';
-      el.style.fontSize = '12px';
-      el.style.lineHeight = '1.4';
-      el.style.whiteSpace = 'pre-wrap';
-      el.style.border = '1px solid rgba(255,255,255,0.25)';
-      el.style.borderRadius = '8px';
-      el.style.pointerEvents = 'none';
-      document.body.appendChild(el);
-    }
-    this._debugPanel = el;
-  }
+  _ensureDebugPanel(){}
 
-  _dbg(message){
-    try{
-      this._ensureDebugPanel();
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      const ss = String(now.getSeconds()).padStart(2, '0');
-      const line = `[${hh}:${mm}:${ss}] [Field] ${message}`;
-      const prev = this._debugPanel.textContent || '';
-      this._debugPanel.textContent = `${line}\n${prev}`.slice(0, 8000);
-    }catch(_){ }
-  }
+  _dbg(message){}
 
   // =========================
   // 演出 / FX
