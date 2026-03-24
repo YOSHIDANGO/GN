@@ -1412,58 +1412,93 @@ _startClubMode(){
     if (this.clubSelectMenu){
       this.clubSelectMenu.destroy(true);
     }
-  
+
     const w = this.scale.width;
     const h = this.scale.height;
-  
-    const container = this.add.container(0,0).setDepth(9999);
-  
-    const bg = this.add.rectangle(w/2, h/2, w*0.8, h*0.7, 0x000000, 0.85)
-      .setOrigin(0.5);
+
+    const container = this.add.container(0, 0).setDepth(9999);
+
+    const panelW = Math.min(Math.floor(w * 0.88), 720);
+    const padX = Math.max(18, Math.floor(panelW * 0.05));
+    const padY = Math.max(18, Math.floor(h * 0.03));
+    const cols = 2;
+    const btnGapX = Math.max(12, Math.floor(w * 0.02));
+    const btnGapY = Math.max(12, Math.floor(h * 0.018));
+    const titleFs = Math.max(24, Math.floor(w * 0.045));
+    const btnFs = Math.max(18, Math.floor(w * 0.034));
+    const cancelFs = Math.max(18, Math.floor(w * 0.03));
+    const btnH = Math.max(46, Math.floor(h * 0.065));
+    const btnW = Math.floor((panelW - padX * 2 - btnGapX) / 2);
+    const rows = Math.ceil((Array.isArray(list) ? list.length : 0) / 2);
+    const contentH = rows * btnH + Math.max(0, rows - 1) * btnGapY;
+    const panelH = padY + Math.floor(titleFs * 1.6) + 18 + contentH + 22 + btnH + padY;
+
+    const cx = Math.floor(w / 2);
+    const cy = Math.floor(h / 2);
+
+    const bg = this.add.rectangle(cx, cy, panelW, panelH, 0x000000, 0.85).setOrigin(0.5);
     container.add(bg);
-  
-    const title = this.add.text(w/2, h*0.2, "誰を指名する？", {
-      fontSize: "28px",
-      color: "#ffffff"
-    }).setOrigin(0.5);
+
+    const title = this.add.text(cx, cy - panelH / 2 + padY, '誰を指名する？', {
+      fontSize: `${titleFs}px`,
+      color: '#ffffff'
+    }).setOrigin(0.5, 0);
     container.add(title);
-  
-    const startY = h*0.3;
-    const gap = 60;
-  
-    list.forEach((id, i) => {
+
+    const startY = title.y + title.height + 18;
+    const startX = cx - panelW / 2 + padX;
+    const names = Array.isArray(list) ? list : [];
+
+    names.forEach((id, i) => {
       const def = this.cache.json.get(`club_char_${id}`) || {};
       const name = def.name || id;
-  
-      const btn = this.add.text(w/2, startY + gap*i, name, {
-        fontSize: "24px",
-        backgroundColor: "#222222",
-        padding: { left: 16, right:16, top:8, bottom:8 }
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .on('pointerdown', () => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const x = startX + col * (btnW + btnGapX) + btnW / 2;
+      const y = startY + row * (btnH + btnGapY) + btnH / 2;
+
+      const btnBg = this.add.rectangle(x, y, btnW, btnH, 0x222222, 0.96)
+        .setStrokeStyle(1, 0xffffff, 0.18)
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+
+      const btnText = this.add.text(x, y, name, {
+        fontSize: `${btnFs}px`,
+        color: '#ffffff',
+        align: 'center'
+      }).setOrigin(0.5);
+
+      const onTap = () => {
         this._closeClubSelectMenu();
         this._launchClub(id);
-      });
-  
-      container.add(btn);
+      };
+
+      btnBg.on('pointerdown', onTap);
+      btnText.setInteractive({ useHandCursor: true }).on('pointerdown', onTap);
+
+      container.add(btnBg);
+      container.add(btnText);
     });
-  
-    const cancel = this.add.text(w/2, h*0.85, "やめる", {
-      fontSize: "20px",
-      color: "#aaaaaa"
-    })
-    .setOrigin(0.5)
-    .setInteractive({ useHandCursor: true })
-    .on('pointerdown', () => {
-      this._closeClubSelectMenu();
-    });
-    container.add(cancel);
-  
+
+    const cancelY = startY + contentH + 22 + btnH / 2;
+    const cancelBg = this.add.rectangle(cx, cancelY, panelW - padX * 2, btnH, 0x1a1a1a, 0.9)
+      .setStrokeStyle(1, 0xffffff, 0.14)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    const cancelText = this.add.text(cx, cancelY, 'やめる', {
+      fontSize: `${cancelFs}px`,
+      color: '#aaaaaa'
+    }).setOrigin(0.5);
+
+    cancelBg.on('pointerdown', () => this._closeClubSelectMenu());
+    cancelText.setInteractive({ useHandCursor: true }).on('pointerdown', () => this._closeClubSelectMenu());
+
+    container.add(cancelBg);
+    container.add(cancelText);
+
     this.clubSelectMenu = container;
   }
-  
+
   _closeClubSelectMenu(){
     if (this.clubSelectMenu){
       this.clubSelectMenu.destroy(true);

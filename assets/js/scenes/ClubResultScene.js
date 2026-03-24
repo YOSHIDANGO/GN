@@ -14,39 +14,11 @@ export class ClubResultScene extends Phaser.Scene {
     this.threshold = Number(data?.threshold ?? 70);
     this.forced = !!data?.forced;
 
-    const dbg = (msg) => {
-      try{
-        let el = document.getElementById('club-debug-panel');
-        if (!el){
-          el = document.createElement('div');
-          el.id = 'club-debug-panel';
-          el.style.position = 'fixed';
-          el.style.left = '8px';
-          el.style.top = '8px';
-          el.style.zIndex = '100000';
-          el.style.maxWidth = '92vw';
-          el.style.maxHeight = '42vh';
-          el.style.overflow = 'auto';
-          el.style.padding = '8px 10px';
-          el.style.background = 'rgba(0,0,0,0.82)';
-          el.style.color = '#00ff88';
-          el.style.fontSize = '12px';
-          el.style.lineHeight = '1.4';
-          el.style.whiteSpace = 'pre-wrap';
-          el.style.border = '1px solid rgba(255,255,255,0.25)';
-          el.style.borderRadius = '8px';
-          el.style.pointerEvents = 'none';
-          document.body.appendChild(el);
-        }
-        const now = new Date();
-        const hh = String(now.getHours()).padStart(2, '0');
-        const mm = String(now.getMinutes()).padStart(2, '0');
-        const ss = String(now.getSeconds()).padStart(2, '0');
-        el.textContent = `[${hh}:${mm}:${ss}] ${msg}\n` + (el.textContent || '');
-      }catch(_){}
-    };
-    this._dbg = dbg;
-    this._dbg(`ClubResult create returnTo=${this.returnTo}`);
+    try{
+      const el = document.getElementById('club-debug-panel');
+      if (el) el.remove();
+    }catch(_){}
+    this._dbg = function(){};
 
     const w = this.scale.width;
     const h = this.scale.height;
@@ -115,6 +87,10 @@ export class ClubResultScene extends Phaser.Scene {
     try{
       const el = document.getElementById('club-fixed-bar');
       if (el) el.remove();
+    }catch(_){}
+    try{
+      const dbg = document.getElementById('club-debug-panel');
+      if (dbg) dbg.remove();
     }catch(_){}
   }
 

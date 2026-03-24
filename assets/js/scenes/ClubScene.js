@@ -429,7 +429,6 @@ export class ClubScene extends Phaser.Scene {
     return wrapped.join('\n');
   }
 
-
   _showNpc(text){
     this.lastNpcText = this._formatNpcText(text || '');
     this._dbg(`_showNpc runId=${this._runId} text="${String(this.lastNpcText).slice(0, 60)}"`);
