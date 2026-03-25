@@ -1421,15 +1421,15 @@ _startClubMode(){
     const panelW = Math.min(Math.floor(w * 0.88), 720);
     const padX = Math.max(18, Math.floor(panelW * 0.05));
     const padY = Math.max(18, Math.floor(h * 0.03));
-    const cols = 2;
+    const cols = 3;
     const btnGapX = Math.max(12, Math.floor(w * 0.02));
     const btnGapY = Math.max(12, Math.floor(h * 0.018));
     const titleFs = Math.max(24, Math.floor(w * 0.045));
     const btnFs = Math.max(18, Math.floor(w * 0.034));
     const cancelFs = Math.max(18, Math.floor(w * 0.03));
     const btnH = Math.max(46, Math.floor(h * 0.065));
-    const btnW = Math.floor((panelW - padX * 2 - btnGapX) / 2);
-    const rows = Math.ceil((Array.isArray(list) ? list.length : 0) / 2);
+    const btnW = Math.floor((panelW - padX * 2 - btnGapX * (cols - 1)) / cols);
+    const rows = Math.ceil((Array.isArray(list) ? list.length : 0) / cols);
     const contentH = rows * btnH + Math.max(0, rows - 1) * btnGapY;
     const panelH = padY + Math.floor(titleFs * 1.6) + 18 + contentH + 22 + btnH + padY;
 
@@ -1452,8 +1452,8 @@ _startClubMode(){
     names.forEach((id, i) => {
       const def = this.cache.json.get(`club_char_${id}`) || {};
       const name = def.name || id;
-      const col = i % 2;
-      const row = Math.floor(i / 2);
+      const col = i % cols;
+      const row = Math.floor(i / cols);
       const x = startX + col * (btnW + btnGapX) + btnW / 2;
       const y = startY + row * (btnH + btnGapY) + btnH / 2;
 

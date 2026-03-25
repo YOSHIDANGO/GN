@@ -394,7 +394,7 @@ export class ClubScene extends Phaser.Scene {
 
     const normalized = src.replace(/\n{3,}/g, '\n\n');
     const parts = normalized.split(/\n+/);
-    const maxChars = 22;
+    const maxChars = 30;
     const wrapped = [];
 
     const wrapChunk = (chunk) => {
