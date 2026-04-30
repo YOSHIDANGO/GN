@@ -1224,10 +1224,12 @@ export class FieldScene extends Phaser.Scene {
       this._closeBoyMenu();
     });
 
+    /*
     this.boyBtnPlay = mkBtn('お店で遊ぶ', ()=>{
       this._closeBoyMenu();
       this._startClubMode();
     });
+    */
 
     this.boyBtnClose = mkBtn('やめる', ()=>{
       this._closeBoyMenu();
