@@ -155,6 +155,7 @@ export class FieldScene extends Phaser.Scene {
         this._pointerConsumed = false;
         this.pendingDoorOutside = false;
         this._sceneTransitioning = false;
+        this._playFieldBgm();
 
         if (this.input) this.input.enabled = true;
 
@@ -766,10 +767,12 @@ export class FieldScene extends Phaser.Scene {
       this._dbg('[Field] _launchDialogue paused Field');
 
       this._dbg('[Field] _launchDialogue launching Dialogue');
+      const dialogueBgKey = bgKey || ((this.mode === 'inside') ? 'bg_shop_inside' : 'bg_susukino_night_01');
       this.scene.launch('Dialogue', {
         scriptKey,
         returnTo: 'Field',
-        bgKey: bgKey || ((this.mode === 'inside') ? 'bg_shop_inside' : 'bg_susukino_night_01')
+        bgKey: dialogueBgKey,
+        bgmKey: dialogueBgKey === 'bg_shop_inside' ? 'club' : 'town'
       });
       this._dbg('[Field] _launchDialogue launched Dialogue');
 

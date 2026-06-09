@@ -2,15 +2,18 @@
   "lines": [
     {
       "name": "ボーイ",
-      "text": "今日のレイ、目が怖い。いい意味で"
+      "text": "今日のレイ、目が怖い。いい意味で",
+      "voice": "./assets/audio/voice/story/npc_boy_2/001_boy.mp3"
     },
     {
       "name": "レイ",
-      "text": "褒めてないだろ"
+      "text": "褒めてないだろ",
+      "voice": "./assets/audio/voice/story/npc_boy_2/002_rei.mp3"
     },
     {
       "name": "ボーイ",
-      "text": "褒めてる。怖い子は伸びる。折れなきゃな"
+      "text": "褒めてる。怖い子は伸びる。折れなきゃな",
+      "voice": "./assets/audio/voice/story/npc_boy_2/003_boy.mp3"
     }
   ]
 }

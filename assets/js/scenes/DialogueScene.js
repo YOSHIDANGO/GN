@@ -1,5 +1,6 @@
 // assets/js/scenes/DialogueScene.js
 import { DialogueUI } from '../ui/DialogueUI.js';
+import { duckBgm, playBgm } from '../util/bgm.js';
 
 export class DialogueScene extends Phaser.Scene {
   constructor(){
@@ -11,6 +12,10 @@ export class DialogueScene extends Phaser.Scene {
     this.scriptKey = data?.scriptKey || 'story_opening';
 
     const script = this.cache.json.get(this.scriptKey) || {};
+    const bgmKey = data?.bgmKey || script?.bgmKey || null;
+    if (bgmKey) playBgm(this, bgmKey);
+    duckBgm(this, true);
+
     this.lines = Array.isArray(script.lines) ? script.lines : [];
     this.idx = 0;
     this.charas = [];
@@ -193,6 +198,7 @@ export class DialogueScene extends Phaser.Scene {
   }
 
   _cleanup(){
+    duckBgm(this, false);
     this._stopVoice();
 
     if (this._onResizeTap){

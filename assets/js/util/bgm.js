@@ -47,6 +47,7 @@ export function playBgm(scene, key){
   }
 
   const def = BGM_CONFIG[key] || {};
+  const baseVolume = def.volume ?? 0.5;
   const bgm = scene.sound.add(key, {
     loop: true,
     volume: 0
@@ -54,11 +55,28 @@ export function playBgm(scene, key){
 
   scene.game.registry.set('bgm', bgm);
   scene.game.registry.set('bgmKey', key);
+  scene.game.registry.set('bgmBaseVolume', baseVolume);
+  scene.game.registry.set('bgmDucked', false);
 
   bgm.play();
   scene.tweens.add({
     targets: bgm,
-    volume: def.volume ?? 0.5,
+    volume: baseVolume,
     duration: 450
+  });
+}
+
+export function duckBgm(scene, ducked){
+  const bgm = scene?.game?.registry?.get('bgm');
+  if (!scene || !bgm) return;
+
+  const baseVolume = scene.game.registry.get('bgmBaseVolume') ?? 0.5;
+  const target = ducked ? baseVolume * 0.38 : baseVolume;
+
+  scene.game.registry.set('bgmDucked', !!ducked);
+  scene.tweens.add({
+    targets: bgm,
+    volume: target,
+    duration: ducked ? 220 : 320
   });
 }
