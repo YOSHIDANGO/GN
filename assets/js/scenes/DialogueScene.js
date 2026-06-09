@@ -17,6 +17,8 @@ export class DialogueScene extends Phaser.Scene {
     this.tapLayer = null;
     this._onResizeTap = null;
     this._ended = false;
+    this._voice = null;
+    this._voiceToken = 0;
 
     this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
 
@@ -153,6 +155,7 @@ export class DialogueScene extends Phaser.Scene {
 
     this.ui.setName(line.name || '');
     this.ui.setText(line.text || '');
+    this._playVoice(line);
   }
 
   _next(){
@@ -166,6 +169,8 @@ export class DialogueScene extends Phaser.Scene {
   }
 
   _cleanup(){
+    this._stopVoice();
+
     if (this._onResizeTap){
       this.scale.off('resize', this._onResizeTap);
       this._onResizeTap = null;
@@ -187,6 +192,64 @@ export class DialogueScene extends Phaser.Scene {
 
     this.keySpace = null;
     this.keyEsc = null;
+  }
+
+  _voiceKeyFor(path){
+    return `voice_${String(path || '')
+      .replace(/^\.?\//, '')
+      .replace(/[^a-zA-Z0-9_]/g, '_')}`;
+  }
+
+  _stopVoice(){
+    this._voiceToken += 1;
+    if (this._voice){
+      try{ this._voice.stop(); this._voice.destroy(); }catch(_){ }
+      this._voice = null;
+    }
+  }
+
+  _playVoice(line){
+    this._stopVoice();
+
+    const voicePath = String(line?.voice || '').trim();
+    if (!voicePath) return;
+
+    const token = this._voiceToken;
+    const key = line.voiceKey || this._voiceKeyFor(voicePath);
+
+    const playLoaded = () => {
+      if (this._ended || token !== this._voiceToken) return;
+      if (!this.cache.audio.exists(key)) return;
+
+      try{
+        this._voice = this.sound.add(key, { volume: 0.95 });
+        this._voice.once('complete', () => {
+          if (this._voice){
+            try{ this._voice.destroy(); }catch(_){ }
+            this._voice = null;
+          }
+        });
+        this._voice.play();
+      }catch(_){ }
+    };
+
+    if (this.cache.audio.exists(key)){
+      playLoaded();
+      return;
+    }
+
+    const onComplete = () => {
+      this.load.off('loaderror', onError);
+      playLoaded();
+    };
+    const onError = () => {
+      this.load.off('complete', onComplete);
+    };
+
+    this.load.once('complete', onComplete);
+    this.load.once('loaderror', onError);
+    this.load.audio(key, voicePath);
+    this.load.start();
   }
 
   _end(){
