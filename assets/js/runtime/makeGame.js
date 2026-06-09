@@ -87,18 +87,39 @@ export function makeGame(page){
     return null;
   }
 
-  const initialW = Math.max(320, Math.floor(window.innerWidth));
-  const initialH = Math.max(320, Math.floor(window.innerHeight));
+  const root = document.getElementById('game');
+
+  document.documentElement.style.width = '100%';
+  document.documentElement.style.height = '100%';
+  document.documentElement.style.margin = '0';
+  document.documentElement.style.padding = '0';
+  document.documentElement.style.overflow = 'hidden';
+
+  document.body.style.width = '100%';
+  document.body.style.height = '100%';
+  document.body.style.margin = '0';
+  document.body.style.padding = '0';
+  document.body.style.overflow = 'hidden';
+
+  root.style.position = 'fixed';
+  root.style.inset = '0';
+  root.style.width = '100vw';
+  root.style.height = '100dvh';
+  root.style.margin = '0';
+  root.style.padding = '0';
+  root.style.overflow = 'hidden';
+  root.style.background = '#000';
+  root.style.transform = 'none';
 
   const config = {
     type: Phaser.AUTO,
     parent: 'game',
     backgroundColor: '#0b0b10',
     scale: {
-      mode: Phaser.Scale.RESIZE,
-      autoCenter: Phaser.Scale.NO_CENTER,
-      width: initialW,
-      height: initialH
+      mode: Phaser.Scale.FIT,
+      autoCenter: Phaser.Scale.CENTER_BOTH,
+      width: 1280,
+      height: 720
     },
     input: { activePointers: 2 },
     scene: [
@@ -122,24 +143,9 @@ export function makeGame(page){
 
   phaserGame.registry.set('startPage', page);
 
-  const root = document.getElementById('game');
-
-  root.style.position = 'fixed';
-  root.style.left = '0';
-  root.style.top = '0';
-  root.style.margin = '0';
-  root.style.padding = '0';
-
-  document.documentElement.style.height = '100%';
-  document.body.style.height = '100%';
-  document.body.style.margin = '0';
-  document.body.style.overflow = 'hidden';
-  document.documentElement.style.overflow = 'hidden';
-
   let raf = 0;
   let lastW = 0;
   let lastH = 0;
-  let lastTop = 0;
 
   const fitRoot = () => {
     cancelAnimationFrame(raf);
@@ -148,23 +154,18 @@ export function makeGame(page){
 
       const wRaw = vv ? vv.width : window.innerWidth;
       const hRaw = vv ? vv.height : window.innerHeight;
-      const top  = vv ? vv.offsetTop : 0;
 
       const w = Math.floor(wRaw / 2) * 2;
       const h = Math.floor(hRaw / 2) * 2;
 
-      if (w === lastW && h === lastH && top === lastTop) return;
-      lastW = w; lastH = h; lastTop = top;
+      if (w === lastW && h === lastH) return;
+      lastW = w; lastH = h;
 
       root.style.width  = `${w}px`;
       root.style.height = `${h}px`;
-      root.style.transform = `translateY(${top}px)`;
-      root.style.transformOrigin = 'top left';
+      root.style.transform = 'none';
 
-      if (phaserGame.scale){
-        phaserGame.scale.resize(w, h);
-        phaserGame.scale.refresh();
-      }
+      if (phaserGame.scale) phaserGame.scale.refresh();
     });
   };
 
