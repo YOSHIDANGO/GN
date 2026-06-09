@@ -1,4 +1,5 @@
 // assets/js/scenes/BootScene.js
+import { preloadBgm } from '../util/bgm.js';
 export class BootScene extends Phaser.Scene {
     constructor(){ super('Boot'); }
   
@@ -40,6 +41,8 @@ export class BootScene extends Phaser.Scene {
       this.load.image('ui_panel',   './assets/img/ui/ui_panel.png');
       this.load.image('flash_red',  './assets/img/ui/flash_red.png');
       this.load.image('title_logo', './assets/img/ui/title_logo.png');
+
+      preloadBgm(this);
   
       this.load.spritesheet('field_ui', './assets/img/field/ui/ui_sheet.png', {
         frameWidth: 32,

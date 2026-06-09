@@ -1,4 +1,5 @@
 // assets/js/scenes/EndingScene.js
+import { playBgm } from '../util/bgm.js';
 export class EndingScene extends Phaser.Scene {
     constructor(){
       super('Ending');
@@ -13,6 +14,8 @@ export class EndingScene extends Phaser.Scene {
     }
   
     create(){
+      playBgm(this, 'opening');
+
       const w = this.scale.width;
       const h = this.scale.height;
   

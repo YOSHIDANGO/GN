@@ -9,7 +9,84 @@ import { EndingScene } from '../scenes/EndingScene.js';
 import { ClubScene } from '../scenes/ClubScene.js';
 import { ClubResultScene } from '../scenes/ClubResultScene.js';
 
+function isTouchDevice(){
+  return navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
+}
+
+function requestFullscreenAndLandscape(){
+  const root = document.documentElement;
+  const tasks = [];
+
+  if (root.requestFullscreen && !document.fullscreenElement){
+    tasks.push(root.requestFullscreen().catch(() => null));
+  }
+
+  const orientation = screen.orientation;
+  if (orientation?.lock){
+    tasks.push(orientation.lock('landscape').catch(() => null));
+  }
+
+  return Promise.all(tasks);
+}
+
+function createLaunchGate(start){
+  const overlay = document.createElement('div');
+  overlay.id = 'gn-launch-gate';
+  overlay.style.position = 'fixed';
+  overlay.style.inset = '0';
+  overlay.style.zIndex = '2147483647';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.padding = '24px';
+  overlay.style.boxSizing = 'border-box';
+  overlay.style.background = '#050509';
+  overlay.style.color = '#fff';
+  overlay.style.fontFamily = 'system-ui,-apple-system,Segoe UI,sans-serif';
+  overlay.style.textAlign = 'center';
+  overlay.style.touchAction = 'manipulation';
+
+  const panel = document.createElement('button');
+  panel.type = 'button';
+  panel.style.width = 'min(520px, 92vw)';
+  panel.style.minHeight = '128px';
+  panel.style.border = '1px solid rgba(255,255,255,0.28)';
+  panel.style.borderRadius = '14px';
+  panel.style.background = 'rgba(255,255,255,0.08)';
+  panel.style.color = '#fff';
+  panel.style.font = '700 22px system-ui,-apple-system,Segoe UI,sans-serif';
+  panel.style.lineHeight = '1.5';
+  panel.style.padding = '22px';
+  panel.style.cursor = 'pointer';
+  panel.innerHTML = 'タップして開始<br><span style="font-size:15px;font-weight:500;color:#cfcfd8;">横向き・全画面を試します</span>';
+
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+
+  let started = false;
+  const begin = async () => {
+    if (started) return;
+    started = true;
+    panel.disabled = true;
+    panel.style.opacity = '0.7';
+
+    await requestFullscreenAndLandscape();
+
+    overlay.remove();
+    window.__GN_LAUNCH_CONFIRMED__ = true;
+    start();
+  };
+
+  panel.addEventListener('click', begin, { once:true });
+  panel.addEventListener('pointerdown', (e) => e.stopPropagation(), true);
+}
+
 export function makeGame(page){
+  if (isTouchDevice() && !window.__GN_LAUNCH_CONFIRMED__){
+    createLaunchGate(() => makeGame(page));
+    return null;
+  }
+
   const isLandscape = window.innerWidth > window.innerHeight;
 
   const config = {

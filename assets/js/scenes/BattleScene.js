@@ -2,6 +2,7 @@
 import { BattleUI } from '../ui/BattleUI.js';
 import { calcDamage } from '../util/damage.js';
 import { loadSave, storeSave } from '../core/save.js';
+import { playBgm } from '../util/bgm.js';
 
 const PHASE = {
   PLAYER_SELECT:     'PLAYER_SELECT',
@@ -73,6 +74,7 @@ export class BattleScene extends Phaser.Scene {
     // バトル種別
     this.type = data?.type || 'guest';
     this.id   = data?.id || 'salaryman';
+    playBgm(this, this.type === 'cabajo' ? 'battle_cabajo' : 'battle_guest');
 
     // DB
     const dbCabajo = this.cache.json.get('enemies_cabajo')?.cabajo || {};

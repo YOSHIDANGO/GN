@@ -2,6 +2,7 @@
 import { makeEncounterCounter, addSteps, pickGuestId } from '../util/encounter.js';
 import { loadSave, storeSave } from '../core/save.js';
 import { EventQueue } from '../core/eventQueue.js';
+import { playBgm } from '../util/bgm.js';
 
 export class FieldScene extends Phaser.Scene {
   constructor(){ super('Field'); }
@@ -113,6 +114,7 @@ export class FieldScene extends Phaser.Scene {
     // 表示モード反映
     this.bgOutside.setVisible(this.mode === 'outside');
     this.bgInside.setVisible(this.mode === 'inside');
+    this._playFieldBgm();
 
     this.target = new Phaser.Math.Vector2(this.player.x, this.player.y);
 
@@ -2234,6 +2236,7 @@ _startClubMode(){
 
     this.bgOutside.setVisible(!wasOutside);
     this.bgInside.setVisible(wasOutside);
+    this._playFieldBgm();
 
     // FXの表示も追従
     this._applyFxVisibilityByMode();
@@ -2265,5 +2268,9 @@ _startClubMode(){
       // opening 済みなら、入店時イベント（bossUnlock/解禁）を流す
       this._runFieldEntryEvents();
     }
+  }
+
+  _playFieldBgm(){
+    playBgm(this, this.mode === 'inside' ? 'club' : 'town');
   }
 }

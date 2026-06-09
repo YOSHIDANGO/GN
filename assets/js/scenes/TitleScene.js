@@ -1,10 +1,13 @@
 // assets/js/scenes/TitleScene.js
 import { defaultSave, loadSave, storeSave } from '../core/save.js';
+import { playBgm } from '../util/bgm.js';
 
 export class TitleScene extends Phaser.Scene {
   constructor(){ super('Title'); }
 
   create(){
+    playBgm(this, 'opening');
+
     this.saved = loadSave();
     this.hasSave = !!this.saved;
 
