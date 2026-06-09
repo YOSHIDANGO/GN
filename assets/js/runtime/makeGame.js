@@ -87,16 +87,14 @@ export function makeGame(page){
     return null;
   }
 
-  const isLandscape = window.innerWidth > window.innerHeight;
-
   const config = {
     type: Phaser.AUTO,
     parent: 'game',
     backgroundColor: '#0b0b10',
     scale: {
-      mode: Phaser.Scale.FIT,
+      mode: Phaser.Scale.ENVELOP,
       autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: isLandscape ? 1600 : 1280,
+      width: 1280,
       height: 720
     },
     input: { activePointers: 2 },
