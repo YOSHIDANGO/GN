@@ -116,8 +116,8 @@ export function makeGame(page){
     parent: 'game',
     backgroundColor: '#0b0b10',
     scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
+      mode: Phaser.Scale.NONE,
+      autoCenter: Phaser.Scale.NO_CENTER,
       width: 1280,
       height: 720
     },
@@ -164,6 +164,21 @@ export function makeGame(page){
       root.style.width  = `${w}px`;
       root.style.height = `${h}px`;
       root.style.transform = 'none';
+
+      const canvas = root.querySelector('canvas');
+      if (canvas){
+        const displayH = h;
+        const displayW = Math.floor(displayH * (1280 / 720));
+        const left = Math.floor((w - displayW) / 2);
+
+        canvas.style.position = 'absolute';
+        canvas.style.left = `${left}px`;
+        canvas.style.top = '0';
+        canvas.style.width = `${displayW}px`;
+        canvas.style.height = `${displayH}px`;
+        canvas.style.margin = '0';
+        canvas.style.display = 'block';
+      }
 
       if (phaserGame.scale) phaserGame.scale.refresh();
     });
