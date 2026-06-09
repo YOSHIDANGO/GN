@@ -31,8 +31,8 @@ export class TitleScene extends Phaser.Scene {
       color: this.hasSave ? '#ddd' : '#666'
     }).setOrigin(0.5).setShadow(2,2,'#000',2);
 
-    // メニュー枠（★確認ボタン追加で少し高さ増やす）
-    this.menuBox = this.add.rectangle(0,0,520,250,0x000000,0.45)
+    // メニュー枠
+    this.menuBox = this.add.rectangle(0,0,520,200,0x000000,0.45)
       .setOrigin(0.5)
       .setStrokeStyle(2,0xffffff,0.15);
 
@@ -56,15 +56,6 @@ export class TitleScene extends Phaser.Scene {
         .setInteractive({ useHandCursor:true })
         .on('pointerdown', ()=> this._continue());
     }
-
-    // ---- ボタン：エンディング確認（★追加）----
-    this.btnEnding = this.add.text(0,0,'エンディング確認',{
-      fontSize:'22px',
-      color:'#cfcfcf'
-    }).setOrigin(0.5).setShadow(2,2,'#000',2)
-      .setInteractive({ useHandCursor:true });
-
-    this.btnEnding.on('pointerdown', ()=> this._testEnding());
 
     // 注意文
     this.warnText = this.add.text(0,0,
@@ -108,12 +99,10 @@ export class TitleScene extends Phaser.Scene {
     const boxY = Math.floor(h * 0.58);
     this.menuBox.setPosition(w/2, boxY);
 
-    // ★3段に配置
-    this.btnNew.setPosition(w/2, boxY - 55);
-    this.btnContinue.setPosition(w/2, boxY - 5);
-    this.btnEnding.setPosition(w/2, boxY + 50);
+    this.btnNew.setPosition(w/2, boxY - 30);
+    this.btnContinue.setPosition(w/2, boxY + 30);
 
-    this.warnText.setPosition(w/2, boxY + 100);
+    this.warnText.setPosition(w/2, boxY + 80);
   }
 
   _startNew(){
@@ -125,14 +114,5 @@ export class TitleScene extends Phaser.Scene {
   _continue(){
     if (!this.hasSave) return;
     this.scene.start('Field', { fromTitle:true, newGame:false });
-  }
-
-  // ★エンディング確認用
-  _testEnding(){
-    // もし他シーンのBGMが残ってても、とりあえず無音で確認したいなら止める
-    // 必要なければコメントアウトしてOK
-    this.sound.stopAll();
-
-    this.scene.start('Ending', { returnTo: 'Title' });
   }
 }

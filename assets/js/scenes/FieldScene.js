@@ -1224,13 +1224,6 @@ export class FieldScene extends Phaser.Scene {
       this._closeBoyMenu();
     });
 
-    /*
-    this.boyBtnPlay = mkBtn('お店で遊ぶ', ()=>{
-      this._closeBoyMenu();
-      this._startClubMode();
-    });
-    */
-
     this.boyBtnClose = mkBtn('やめる', ()=>{
       this._closeBoyMenu();
     });
@@ -1240,7 +1233,6 @@ export class FieldScene extends Phaser.Scene {
       this.boyMenuTitle,
       this.boyBtnHeal.bg, this.boyBtnHeal.tx,
       this.boyBtnSave.bg, this.boyBtnSave.tx,
-      this.boyBtnPlay.bg, this.boyBtnPlay.tx,
       this.boyBtnClose.bg, this.boyBtnClose.tx,
       this.boyMenuHint
     ]);
@@ -1269,7 +1261,7 @@ export class FieldScene extends Phaser.Scene {
     const gapX = Math.max(14, Math.floor(panelW * 0.03));
     const gapY = Math.max(14, Math.floor(btnH * 0.25));
 
-    // 4ボタンなので2列固定（2x2）
+    // 3ボタンなので2列目中央に「やめる」を置く
     const btnW = Math.floor((panelW - padX*2 - gapX) / 2);
 
     // タイトル・ヒント
@@ -1285,7 +1277,7 @@ export class FieldScene extends Phaser.Scene {
       btn.tx.setPosition(x, y);
     };
 
-    // ボタン配置（2x2）
+    // ボタン配置
     const topY  = cy - Math.floor(btnH * 1.05);
     const leftX  = cx - (btnW/2 + gapX/2);
     const rightX = cx + (btnW/2 + gapX/2);
@@ -1293,8 +1285,7 @@ export class FieldScene extends Phaser.Scene {
 
     placeBtn(this.boyBtnHeal,  leftX,  topY);
     placeBtn(this.boyBtnSave,  rightX, topY);
-    placeBtn(this.boyBtnPlay,  leftX,  row2Y);
-    placeBtn(this.boyBtnClose, rightX, row2Y);
+    placeBtn(this.boyBtnClose, cx, row2Y);
 
     // 背景サイズ
     const contentH = (btnH*2 + gapY);

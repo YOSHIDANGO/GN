@@ -23,7 +23,6 @@ export function makeGame(page){
       height: 720
     },
     input: { activePointers: 2 },
-    dom: { createContainer: true },
     scene: [
       BootScene,
       TitleScene,
@@ -40,8 +39,6 @@ export function makeGame(page){
 
   // ★ここが重要：ローカル変数で受ける
   const phaserGame = new Phaser.Game(config);
-
-  // ★グローバルも div と被らない名前に
   window.__PHASER_GAME__ = phaserGame;
   window.phaserGame = phaserGame;
 
