@@ -87,19 +87,20 @@ export class TitleScene extends Phaser.Scene {
     this.bg.height = h;
 
     // ロゴ
-    const logoY = Math.floor(h * 0.22);
+    const logoY = Math.floor(h * 0.18);
     this.logo.setPosition(w/2, logoY);
 
     if (this.logo.width){
-      const maxW = Math.min(620, w - 80);
-      this.logo.setScale(Math.min(1, maxW / this.logo.width));
+      const maxW = Math.min(560, w * 0.42);
+      const maxH = Math.max(90, h * 0.22);
+      this.logo.setScale(Math.min(1, maxW / this.logo.width, maxH / this.logo.height));
     }
 
     // info
-    this.infoText.setPosition(w/2, Math.floor(h * 0.36));
+    this.infoText.setPosition(w/2, Math.floor(h * 0.31));
 
     // menu
-    const boxY = Math.floor(h * 0.58);
+    const boxY = Math.floor(h * 0.61);
     this.menuBox.setPosition(w/2, boxY);
 
     this.btnNew.setPosition(w/2, boxY - 30);

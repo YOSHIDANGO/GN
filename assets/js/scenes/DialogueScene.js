@@ -23,8 +23,8 @@ export class DialogueScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
 
     this.bgKey = data?.bgKey || script?.bgKey || 'bg_susukino_night_01';
-    this.bg = this.add.image(640, 360, this.bgKey)
-      .setDisplaySize(1280, 720)
+    this.bg = this.add.image(0, 0, this.bgKey)
+      .setOrigin(0.5)
       .setDepth(0)
       .setVisible(false);
 
@@ -60,7 +60,10 @@ export class DialogueScene extends Phaser.Scene {
     makeTapLayer();
 
     this._onResizeTap = () => {
-      this.time.delayedCall(0, () => makeTapLayer());
+      this.time.delayedCall(0, () => {
+        makeTapLayer();
+        this._layoutCurrentLine();
+      });
     };
     this.scale.on('resize', this._onResizeTap);
 
@@ -102,12 +105,15 @@ export class DialogueScene extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
 
-    const x = (typeof def.x === 'number') ? def.x : 360;
+    const baseW = 1280;
+    const baseH = 720;
+    const x = (typeof def.x === 'number') ? (def.x / baseW) * w : Math.floor(w * 0.28);
 
     const baseBottomY = this.ui.getPortraitBottomY(Math.max(8, Math.floor(h * 0.015)));
-    const bottomY = (typeof def.y === 'number') ? def.y : baseBottomY;
+    const bottomY = (typeof def.y === 'number') ? (def.y / baseH) * h : baseBottomY;
 
     const reqScale = (typeof def.scale === 'number') ? def.scale : 0.5;
+    const screenScale = Math.min(w / baseW, h / baseH);
 
     const img = this.add.image(x, bottomY, def.key)
       .setOrigin(0.5, 1)
@@ -123,23 +129,28 @@ export class DialogueScene extends Phaser.Scene {
     const maxScaleH = maxH / texH;
     const maxScaleW = maxW / texW;
 
-    const scale = Math.min(reqScale, maxScaleH, maxScaleW);
+    const scale = Math.min(reqScale * screenScale, maxScaleH, maxScaleW);
 
     img.setScale(scale);
 
     this.charas.push(img);
   }
 
-  _show(){
+  _layoutBackground(){
+    const w = this.scale.width;
+    const h = this.scale.height;
+    this.bg.setPosition(w / 2, h / 2);
+
+    const texW = this.bg.width || 1;
+    const texH = this.bg.height || 1;
+    this.bg.setScale(Math.max(w / texW, h / texH));
+  }
+
+  _layoutCurrentLine(){
     const line = this.lines[this.idx];
-    if (!line){
-      this._end();
-      return;
-    }
+    if (!line) return;
 
-    const hasChara = !!(line.chars || line.charaKey);
-    this.bg.setVisible(hasChara);
-
+    this._layoutBackground();
     this._clearCharas();
 
     if (Array.isArray(line.chars)){
@@ -152,6 +163,19 @@ export class DialogueScene extends Phaser.Scene {
         scale: (typeof line.charaScale === 'number') ? line.charaScale : 0.5
       });
     }
+  }
+
+  _show(){
+    const line = this.lines[this.idx];
+    if (!line){
+      this._end();
+      return;
+    }
+
+    const hasChara = !!(line.chars || line.charaKey);
+    this.bg.setVisible(hasChara);
+
+    this._layoutCurrentLine();
 
     this.ui.setName(line.name || '');
     this.ui.setText(line.text || '');
