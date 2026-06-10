@@ -180,6 +180,38 @@
                   "scale": 0.5
                 }
               ]
+            },
+            {
+              "name": "レイ",
+              "text": "じゃあ雑じゃないところ、見せればいい？",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "aya_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "アヤ",
+              "text": "いいよ。口じゃなくて一気で決めよ",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "aya_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
             }
           ]
         }

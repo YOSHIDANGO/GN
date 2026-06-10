@@ -180,6 +180,38 @@
                   "scale": 0.5
                 }
               ]
+            },
+            {
+              "name": "レイ",
+              "text": "言い過ぎかどうか、勝った方が決めよ",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "mako_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "マコ",
+              "text": "いいじゃん。一気飲みなら負けないよ",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "mako_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
             }
           ]
         }

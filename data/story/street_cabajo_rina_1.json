@@ -180,6 +180,38 @@
                   "scale": 0.5
                 }
               ]
+            },
+            {
+              "name": "レイ",
+              "text": "ノリなら勝負で見せる",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "rina_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "リナ",
+              "text": "お、言ったね。一気飲みで勝負しよ",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "rina_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
             }
           ]
         }

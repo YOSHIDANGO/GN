@@ -180,6 +180,38 @@
                   "scale": 0.5
                 }
               ]
+            },
+            {
+              "name": "レイ",
+              "text": "甘いかどうか、勝負で見ればいい",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "karen_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "カレン",
+              "text": "いいわ。一気飲みで格の違いを見せてあげる",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "karen_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
             }
           ]
         }

@@ -180,6 +180,38 @@
                   "scale": 0.5
                 }
               ]
+            },
+            {
+              "name": "レイ",
+              "text": "じゃあ勝負で黙らせる",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "mio_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "ミオ",
+              "text": "その強気、嫌いじゃない。一気で決めよ",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "mio_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
             }
           ]
         }
