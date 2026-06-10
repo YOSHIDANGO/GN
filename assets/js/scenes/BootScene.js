@@ -1,5 +1,5 @@
 // assets/js/scenes/BootScene.js
-import { preloadBgm } from '../util/bgm.js';
+import { prepareBgm, preloadBgm } from '../util/bgm.js';
 export class BootScene extends Phaser.Scene {
     constructor(){ super('Boot'); }
   
@@ -172,6 +172,8 @@ export class BootScene extends Phaser.Scene {
     }
   
     create(){
+      prepareBgm(this);
+
       const page = this.game.registry.get('startPage') || 'index';
   
       const go = (key, data) => {

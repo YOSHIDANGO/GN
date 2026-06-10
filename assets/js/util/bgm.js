@@ -41,6 +41,24 @@ export function preloadBgm(scene){
   }
 }
 
+export function prepareBgm(scene){
+  if (!scene) return;
+
+  const registry = scene.game.registry;
+  const sounds = registry.get('bgmSounds') || {};
+
+  for (const key of Object.keys(BGM_CONFIG)){
+    if (!sounds[key] && scene.cache.audio.exists(key)){
+      sounds[key] = scene.sound.add(key, {
+        loop: true,
+        volume: 0
+      });
+    }
+  }
+
+  registry.set('bgmSounds', sounds);
+}
+
 export function playBgm(scene, key){
   if (!scene || !key) return;
   if (!scene.cache.audio.exists(key)) return;
@@ -48,6 +66,7 @@ export function playBgm(scene, key){
   const registry = scene.game.registry;
   const currentKey = registry.get('bgmKey');
   const current = scene.game.registry.get('bgm');
+  const sounds = registry.get('bgmSounds') || {};
   const def = BGM_CONFIG[key] || {};
   const baseVolume = def.volume ?? 0.5;
   const ducked = !!registry.get('bgmDucked');
@@ -56,24 +75,35 @@ export function playBgm(scene, key){
   if (current && currentKey === key){
     registry.set('bgmBaseVolume', baseVolume);
     setVolume(current, targetVolume);
+    if (!current.isPlaying){
+      try{ current.play(); }catch(_){}
+    }
     return;
   }
 
-  if (current) stopAndDestroy(current);
+  if (current){
+    try{ current.stop(); }catch(_){}
+    setVolume(current, 0);
+  }
 
-  const bgm = scene.sound.add(key, {
+  const bgm = sounds[key] || scene.sound.add(key, {
     loop: true,
-    volume: targetVolume
+    volume: 0
   });
+  sounds[key] = bgm;
 
+  registry.set('bgmSounds', sounds);
   registry.set('bgm', bgm);
   registry.set('bgmKey', key);
   registry.set('bgmBaseVolume', baseVolume);
 
   try{
+    setVolume(bgm, targetVolume);
     bgm.play();
   }catch(_){
     stopAndDestroy(bgm);
+    delete sounds[key];
+    registry.set('bgmSounds', sounds);
     registry.remove('bgm');
     registry.remove('bgmKey');
   }
