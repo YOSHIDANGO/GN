@@ -2318,6 +2318,18 @@ _startClubMode(){
     const result = this.game.registry.get('lastDialogueChoiceResult') || 'neutral';
     this.game.registry.remove('lastDialogueChoiceResult');
 
+    if (result === 'bad'){
+      this._saveFieldPos();
+      this.scene.pause('Field');
+      this.scene.setVisible(false, 'Field');
+      this.scene.launch('DrinkBattle', {
+        returnTo: 'Field',
+        enemyId
+      });
+      this.scene.bringToTop('DrinkBattle');
+      return;
+    }
+
     const hpGain = result === 'good' ? 22 : result === 'bad' ? 6 : 14;
 
     if (player){

@@ -8,6 +8,7 @@ import { SaveScene } from '../scenes/SaveScene.js';
 import { EndingScene } from '../scenes/EndingScene.js';
 import { ClubScene } from '../scenes/ClubScene.js';
 import { ClubResultScene } from '../scenes/ClubResultScene.js';
+import { DrinkBattleScene } from '../scenes/DrinkBattleScene.js';
 
 function isTouchDevice(){
   return navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
@@ -131,7 +132,8 @@ export function makeGame(page){
       SaveScene,
       EndingScene,
       ClubScene,
-      ClubResultScene
+      ClubResultScene,
+      DrinkBattleScene
     ],
     physics: { default: 'arcade', arcade: { debug: false } }
   };
