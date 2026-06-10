@@ -24,6 +24,10 @@ export class DialogueScene extends Phaser.Scene {
     this._ended = false;
     this._voice = null;
     this._voiceToken = 0;
+    this.choiceContainer = null;
+    this.choiceOpen = false;
+    this.choiceResult = null;
+    this.game.registry.remove('lastDialogueChoiceResult');
 
     this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
 
@@ -84,6 +88,7 @@ export class DialogueScene extends Phaser.Scene {
   }
 
   update(){
+    if (this.choiceOpen) return;
     if (this.keySpace && Phaser.Input.Keyboard.JustDown(this.keySpace)) this._next();
     if (this.keyEsc && Phaser.Input.Keyboard.JustDown(this.keyEsc)) this._end();
   }
@@ -102,6 +107,14 @@ export class DialogueScene extends Phaser.Scene {
       try{ c.destroy(); }catch(_){ }
     }
     this.charas = [];
+  }
+
+  _clearChoices(){
+    this.choiceOpen = false;
+    if (this.choiceContainer){
+      try{ this.choiceContainer.destroy(true); }catch(_){ }
+      this.choiceContainer = null;
+    }
   }
 
   _addChara(def){
@@ -171,6 +184,8 @@ export class DialogueScene extends Phaser.Scene {
   }
 
   _show(){
+    this._clearChoices();
+
     const line = this.lines[this.idx];
     if (!line){
       this._end();
@@ -185,9 +200,15 @@ export class DialogueScene extends Phaser.Scene {
     this.ui.setName(line.name || '');
     this.ui.setText(line.text || '');
     this._playVoice(line);
+
+    if (Array.isArray(line.choices) && line.choices.length){
+      this._showChoices(line.choices);
+    }
   }
 
   _next(){
+    if (this.choiceOpen) return;
+
     if (!this.lines.length){
       this._end();
       return;
@@ -200,6 +221,7 @@ export class DialogueScene extends Phaser.Scene {
   _cleanup(){
     duckBgm(this, false);
     this._stopVoice();
+    this._clearChoices();
 
     if (this._onResizeTap){
       this.scale.off('resize', this._onResizeTap);
@@ -222,6 +244,71 @@ export class DialogueScene extends Phaser.Scene {
 
     this.keySpace = null;
     this.keyEsc = null;
+  }
+
+  _showChoices(choices){
+    this.choiceOpen = true;
+
+    const w = this.scale.width;
+    const h = this.scale.height;
+    const usable = choices.slice(0, 3);
+    const panelW = Math.min(860, Math.floor(w * 0.82));
+    const btnH = Math.max(46, Math.floor(h * 0.075));
+    const gap = Math.max(8, Math.floor(h * 0.018));
+    const totalH = usable.length * btnH + Math.max(0, usable.length - 1) * gap;
+    const startY = Math.max(18, Math.floor(h * 0.18));
+
+    const c = this.add.container(0, 0)
+      .setDepth(100001)
+      .setScrollFactor(0);
+
+    const stop = (pointer) => {
+      pointer?.event?.stopPropagation?.();
+    };
+
+    usable.forEach((choice, i) => {
+      const y = startY + i * (btnH + gap);
+      const bg = this.add.rectangle(w / 2, y, panelW, btnH, 0x050509, 0.86)
+        .setStrokeStyle(2, 0xffffff, 0.28)
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+
+      const tx = this.add.text(w / 2, y, choice.text || '……', {
+        fontSize: `${Math.min(22, Math.max(16, Math.floor(h * 0.035)))}px`,
+        color: '#ffffff',
+        align: 'center',
+        wordWrap: { width: panelW - 34, useAdvancedWrap: true }
+      }).setOrigin(0.5);
+
+      const choose = (pointer) => {
+        stop(pointer);
+        this._choose(choice);
+      };
+
+      bg.on('pointerdown', choose);
+      tx.setInteractive({ useHandCursor: true }).on('pointerdown', choose);
+      c.add([bg, tx]);
+    });
+
+    const backdrop = this.add.rectangle(w / 2, startY + totalH / 2 - btnH / 2, panelW + 24, totalH + 24, 0x000000, 0.26)
+      .setOrigin(0.5)
+      .setDepth(-1);
+    c.addAt(backdrop, 0);
+
+    this.choiceContainer = c;
+  }
+
+  _choose(choice){
+    this.choiceResult = choice?.result || 'neutral';
+    this.game.registry.set('lastDialogueChoiceResult', this.choiceResult);
+    this._clearChoices();
+
+    const nextLines = Array.isArray(choice?.nextLines) ? choice.nextLines : [];
+    if (nextLines.length){
+      this.lines.splice(this.idx + 1, 0, ...nextLines);
+    }
+
+    this._next();
   }
 
   _voiceKeyFor(path){

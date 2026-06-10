@@ -1,0 +1,201 @@
+{
+  "bgKey": "bg_susukino_night_01",
+  "lines": [
+    {
+      "name": "マコ",
+      "text": "歩き方、少し変わった",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "mako_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "レイ",
+      "text": "見すぎ",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "mako_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "マコ",
+      "text": "負けた相手くらい見るよ。次のために",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "mako_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "レイ",
+      "text": "外でも分析するんだ",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "mako_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "マコ",
+      "text": "マコが静かに観察している。どう返す？",
+      "choices": [
+        {
+          "text": "見られてると、逆に気が抜けない",
+          "result": "good",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "見られてると、逆に気が抜けない",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "mako_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "マコ",
+              "text": "それはいい緊張感だね",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "mako_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "text": "分析しすぎ",
+          "result": "neutral",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "分析しすぎ",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "mako_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "マコ",
+              "text": "癖だから",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "mako_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "text": "気持ち悪い",
+          "result": "bad",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "気持ち悪い",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "mako_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "マコ",
+              "text": "……それは言い過ぎ",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "mako_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "mako_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    }
+  ]
+}

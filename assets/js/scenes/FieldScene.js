@@ -357,6 +357,11 @@ export class FieldScene extends Phaser.Scene {
         this._openRematchMenu(act.enemyId);
         return;
         }
+        if (act.type === 'streetCabajoReward'){
+        this._dbg('dialogue resume -> street cabajo reward');
+        this._applyStreetCabajoReward(act.enemyId);
+        return;
+        }
     }
 
     if (this.state?.flags?.endingPending){
@@ -2124,6 +2129,10 @@ _startClubMode(){
       // encounter outside only
       if (this.mode === 'outside'){
         if (addSteps(this.counter, moved)){
+          if (this._maybeStartStreetCabajoEvent()){
+            return;
+          }
+
           const guestId = pickGuestId();
           this._dbg(`[Field] encounter guest id=${guestId} moved=${moved}`);
           this._saveFieldPos();
@@ -2275,5 +2284,62 @@ _startClubMode(){
 
   _playFieldBgm(){
     playBgm(this, this.mode === 'inside' ? 'club' : 'town');
+  }
+
+  _getDefeatedCabajoIds(){
+    const defeated = this.state?.progress?.defeatedCabajo || {};
+    return this.cabajoOrder.filter(id => defeated[id]);
+  }
+
+  _maybeStartStreetCabajoEvent(){
+    const ids = this._getDefeatedCabajoIds();
+    if (!ids.length) return false;
+
+    // 通常客バトルを完全には潰さない。街でたまに顔を合わせる程度。
+    if (Math.random() > 0.28) return false;
+
+    const enemyId = Phaser.Utils.Array.GetRandom(ids);
+    const scriptKey = `street_cabajo_${enemyId}_1`;
+
+    if (!this.cache.json.get(scriptKey)) return false;
+
+    this._saveFieldPos();
+    this.postDialogueAction = { type:'streetCabajoReward', enemyId };
+    this._launchDialogue(scriptKey, 'bg_susukino_night_01');
+    return true;
+  }
+
+  _applyStreetCabajoReward(enemyId){
+    if (!this.state) this.state = loadSave();
+    if (!this.state) return;
+
+    const p = this.state.progress || (this.state.progress = {});
+    const player = this.state.player;
+    const result = this.game.registry.get('lastDialogueChoiceResult') || 'neutral';
+    this.game.registry.remove('lastDialogueChoiceResult');
+
+    const hpGain = result === 'good' ? 22 : result === 'bad' ? 6 : 14;
+
+    if (player){
+      const maxHp = player.maxHp || 100;
+      player.hp = Math.min(maxHp, (player.hp || maxHp) + hpGain);
+    }
+
+    const cap = this._getNominationCap();
+    const cur = Number(p.nomination || 0);
+    const canAddNomination = Number.isFinite(cap) ? cur < cap : true;
+
+    if (result === 'good' && canAddNomination){
+      p.nomination = Math.min(cur + 1, cap);
+      this._showToast('会話が弾んだ。指名 +1 / HP回復');
+    } else if (result === 'good'){
+      this._showToast('会話が弾んだ。HP回復');
+    } else if (result === 'bad'){
+      this._showToast('少し気まずい。でも息は整った');
+    } else {
+      this._showToast('少し気が楽になった。HP少し回復');
+    }
+
+    storeSave(this.state);
   }
 }

@@ -1,0 +1,201 @@
+{
+  "bgKey": "bg_susukino_night_01",
+  "lines": [
+    {
+      "name": "ユナ",
+      "text": "あ、外でも目立つじゃん",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "yuna_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "レイ",
+      "text": "声かけ方が軽い",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "yuna_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "ユナ",
+      "text": "軽くないと、負けた相手に話しかけづらいし",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "yuna_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "レイ",
+      "text": "そこは気にするんだ",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "yuna_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "ユナ",
+      "text": "ユナが軽く笑っている。どう返す？",
+      "choices": [
+        {
+          "text": "負けた相手に声かけるの、勇気あるね",
+          "result": "good",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "負けた相手に声かけるの、勇気あるね",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "yuna_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "ユナ",
+              "text": "なにそれ。ちょっと褒められてる？",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "yuna_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "text": "相変わらず軽いね",
+          "result": "neutral",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "相変わらず軽いね",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "yuna_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "ユナ",
+              "text": "そこがウチのいいとこでしょ",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "yuna_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "text": "暇なら帰れば",
+          "result": "bad",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "暇なら帰れば",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "yuna_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "ユナ",
+              "text": "うわ、今の冷た",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "yuna_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "yuna_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+{
+  "bgKey": "bg_susukino_night_01",
+  "lines": [
+    {
+      "name": "エリ",
+      "text": "寒くない？ 少し休んだら",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "eri_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "レイ",
+      "text": "急に優しい",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "eri_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "エリ",
+      "text": "店の外くらい、普通でいたいだけ",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "eri_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "レイ",
+      "text": "じゃあ普通に助かる",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "eri_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "エリ",
+      "text": "エリが心配そうに見ている。どう返す？",
+      "choices": [
+        {
+          "text": "ありがとう。少し助かった",
+          "result": "good",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "ありがとう。少し助かった",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "eri_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "エリ",
+              "text": "うん、その言い方なら安心した",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "eri_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "text": "寒いだけ",
+          "result": "neutral",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "寒いだけ",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "eri_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "エリ",
+              "text": "それならいいけど",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "eri_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "text": "心配いらない",
+          "result": "bad",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "心配いらない",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "eri_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "エリ",
+              "text": "……そっか。無理しないでね",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "eri_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "eri_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    }
+  ]
+}

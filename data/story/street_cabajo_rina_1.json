@@ -1,0 +1,201 @@
+{
+  "bgKey": "bg_susukino_night_01",
+  "lines": [
+    {
+      "name": "リナ",
+      "text": "お、夜回り中？ 仕事熱心じゃん",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "rina_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "レイ",
+      "text": "散歩してるだけ",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "rina_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "リナ",
+      "text": "その割に目が勝負前なんだよね",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "rina_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "レイ",
+      "text": "癖になってるだけ",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "rina_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "リナ",
+      "text": "リナが楽しそうに様子を見ている。どう返す？",
+      "choices": [
+        {
+          "text": "見抜かれた。ちょっと気合い入ってる",
+          "result": "good",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "見抜かれた。ちょっと気合い入ってる",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "rina_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "リナ",
+              "text": "いいじゃん、その顔好きかも",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "rina_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "text": "散歩中だってば",
+          "result": "neutral",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "散歩中だってば",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "rina_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "リナ",
+              "text": "はいはい、そういうことにしとく",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "rina_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "text": "うるさいな",
+          "result": "bad",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "うるさいな",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "rina_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "リナ",
+              "text": "今のはノリ悪いなー",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "rina_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "rina_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+{
+  "bgKey": "bg_susukino_night_01",
+  "lines": [
+    {
+      "name": "アヤ",
+      "text": "こんな時間まで動いてるんだ",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "aya_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "レイ",
+      "text": "そっちもでしょ",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "aya_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "アヤ",
+      "text": "負けた日は、少し歩きたくなる",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "aya_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "レイ",
+      "text": "じゃあ今日は歩きすぎないで",
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "aya_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    },
+    {
+      "name": "アヤ",
+      "text": "アヤは少しだけ笑っている。どう返す？",
+      "choices": [
+        {
+          "text": "歩きたい日もあるよね",
+          "result": "good",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "歩きたい日もあるよね",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "aya_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "アヤ",
+              "text": "うん。今のは少し分かってる返し",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "aya_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "text": "負けたから？",
+          "result": "neutral",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "負けたから？",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "aya_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "アヤ",
+              "text": "そこ聞くんだ",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "aya_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "text": "さっさと帰れば",
+          "result": "bad",
+          "nextLines": [
+            {
+              "name": "レイ",
+              "text": "さっさと帰れば",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "aya_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            },
+            {
+              "name": "アヤ",
+              "text": "そういうとこ、まだ雑",
+              "chars": [
+                {
+                  "key": "rei_normal",
+                  "x": 360,
+                  "scale": 0.5
+                },
+                {
+                  "key": "aya_normal",
+                  "x": 920,
+                  "scale": 0.5
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "chars": [
+        {
+          "key": "rei_normal",
+          "x": 360,
+          "scale": 0.5
+        },
+        {
+          "key": "aya_normal",
+          "x": 920,
+          "scale": 0.5
+        }
+      ]
+    }
+  ]
+}

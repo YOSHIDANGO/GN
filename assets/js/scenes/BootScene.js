@@ -110,6 +110,11 @@ export class BootScene extends Phaser.Scene {
       for (const id of cabajoIds){
         this.load.json(`npc_cabajo_after_${id}`, `./data/story/npc_cabajo_after_${id}.json`);
       }
+
+      // 撃破後、街でランダムに会うイベント（8人）
+      for (const id of cabajoIds){
+        this.load.json(`street_cabajo_${id}_1`, `./data/story/street_cabajo_${id}_1.json`);
+      }
   
       // NPC会話
       this.load.json('npc_mob_m_1', './data/story/npc_mob_m_1.json');
