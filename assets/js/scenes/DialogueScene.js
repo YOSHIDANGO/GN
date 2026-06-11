@@ -252,11 +252,28 @@ export class DialogueScene extends Phaser.Scene {
     const w = this.scale.width;
     const h = this.scale.height;
     const usable = choices.slice(0, 3);
-    const panelW = Math.min(860, Math.floor(w * 0.82));
-    const btnH = Math.max(46, Math.floor(h * 0.075));
-    const gap = Math.max(8, Math.floor(h * 0.018));
-    const totalH = usable.length * btnH + Math.max(0, usable.length - 1) * gap;
-    const startY = Math.max(18, Math.floor(h * 0.18));
+    const box = this.ui?._layoutCache || null;
+    const panelW = box ? box.panelW : Math.min(1180, Math.floor(w * 0.92));
+    const panelH = box ? box.panelH : Math.max(190, Math.floor(h * 0.24));
+    const panelX = box ? box.x : w / 2;
+    const panelBottom = box ? box.y : h - Math.max(14, Math.floor(h * 0.02));
+    const panelTop = panelBottom - panelH;
+    const padX = Math.max(22, Math.floor(panelW * 0.03));
+    const innerW = panelW - padX * 2;
+    const horizontal = innerW >= 760;
+    const gap = Math.max(8, Math.floor(h * 0.012));
+    const btnH = Math.max(42, Math.min(54, Math.floor(panelH * 0.23)));
+    const colW = horizontal
+      ? Math.floor((innerW - gap * (usable.length - 1)) / usable.length)
+      : Math.min(innerW, 720);
+    const totalW = horizontal ? usable.length * colW + Math.max(0, usable.length - 1) * gap : colW;
+    const totalH = horizontal ? btnH : usable.length * btnH + Math.max(0, usable.length - 1) * gap;
+    const startX = panelX - totalW / 2 + colW / 2;
+    const baseY = Math.min(
+      panelBottom - Math.max(36, Math.floor(panelH * 0.16)) - totalH / 2,
+      panelTop + Math.floor(panelH * 0.68)
+    );
+    this.ui?.nextMark?.setVisible?.(false);
 
     const c = this.add.container(0, 0)
       .setDepth(100001)
@@ -267,17 +284,18 @@ export class DialogueScene extends Phaser.Scene {
     };
 
     usable.forEach((choice, i) => {
-      const y = startY + i * (btnH + gap);
-      const bg = this.add.rectangle(w / 2, y, panelW, btnH, 0x050509, 0.86)
+      const x = horizontal ? startX + i * (colW + gap) : panelX;
+      const y = horizontal ? baseY : baseY - totalH / 2 + btnH / 2 + i * (btnH + gap);
+      const bg = this.add.rectangle(x, y, colW, btnH, 0x050509, 0.86)
         .setStrokeStyle(2, 0xffffff, 0.28)
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: true });
 
-      const tx = this.add.text(w / 2, y, choice.text || '……', {
-        fontSize: `${Math.min(22, Math.max(16, Math.floor(h * 0.035)))}px`,
+      const tx = this.add.text(x, y, choice.text || '……', {
+        fontSize: `${Math.min(21, Math.max(15, Math.floor(h * 0.029)))}px`,
         color: '#ffffff',
         align: 'center',
-        wordWrap: { width: panelW - 34, useAdvancedWrap: true }
+        wordWrap: { width: colW - 26, useAdvancedWrap: true }
       }).setOrigin(0.5);
 
       const choose = (pointer) => {
@@ -290,7 +308,7 @@ export class DialogueScene extends Phaser.Scene {
       c.add([bg, tx]);
     });
 
-    const backdrop = this.add.rectangle(w / 2, startY + totalH / 2 - btnH / 2, panelW + 24, totalH + 24, 0x000000, 0.26)
+    const backdrop = this.add.rectangle(panelX, baseY, totalW + 18, totalH + 18, 0x000000, 0.18)
       .setOrigin(0.5)
       .setDepth(-1);
     c.addAt(backdrop, 0);
